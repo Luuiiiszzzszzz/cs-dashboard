@@ -693,8 +693,6 @@ function populateSelects(){
   });
   const mr=document.getElementById('fs-membro-rel');
   if(mr) mr.innerHTML=mems;
-  // Preencher select de membro CS no modal com usuários cadastrados no Supabase
-  loadUsuariosParaSelect();
 }
 
 function loadUsuariosParaSelect(){
@@ -1099,14 +1097,9 @@ function toast(msg){
 
 // ═══ INIT ═══ (called by login system after auth)
 function dashInit(){
+  populateSelects();
   buildCidadeChips();
-  loadMembros(function(){
-    populateSelects();
-    loadP(function(){
-      rdr('solicitacoes');
-      updateProfileStats();
-    });
-  });
+  loadP(function(){rdr('solicitacoes');});
 }
 
 
@@ -1197,6 +1190,7 @@ function loadMembros(cb){
         _raw: u
       };
     });
+    populateSelects();
     if(cb)cb();
   });
 }
@@ -1297,14 +1291,14 @@ function LINIT(usr){
     badge.style.border='1px solid '+(isAdmin?'#00c6ff40':'#22d18740');
   }
   setAvatar(usr.usuario,null);
-  checkDiscordLinked(usr.usuario);
+  // checkDiscordLinked desabilitado temporariamente
   if(usr.role==='Administrador'){
     var sb2=document.getElementById('sb-acessos');if(sb2)sb2.style.display='flex';
   }
   checkOAuthReturn();
   if(typeof dashInit==='function')dashInit();
   // Atualiza stats do perfil após carregar dados
-  setTimeout(updateProfileStats, 1200);
+  setTimeout(function(){try{updateProfileStats();}catch(e){}}, 2000);
   document.addEventListener('click',function(e){
     var menu=document.getElementById('profile-menu');
     var wrap=document.getElementById('tb-user-wrap');

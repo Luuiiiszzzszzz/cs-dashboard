@@ -690,7 +690,6 @@ function goPage(id){
   const meta=PAGE_META[id];
   if(meta){
     document.getElementById('breadcrumb').innerHTML=meta.bc;
-    // Abre seção sidebar
     const sbItem=document.getElementById('sb-'+meta.sb);
     const sbSub=document.getElementById('sub-'+meta.sb);
     if(sbItem&&sbSub){
@@ -699,7 +698,8 @@ function goPage(id){
       sbSub.classList.add('open'); sbItem.classList.add('open'); sbItem.classList.add('active');
     }
   }
-  rdr(id);
+  // Recarrega dados do Supabase sempre que navega
+  loadP(function(){rdr(id);updBadges();updateProfileStats();});
 }
 
 // ═══ POPULAT SELECTS ═══
@@ -760,7 +760,7 @@ function mkRows(list, showStatus){
     const podeRemover=isAdmin||(p.criador_por&&_currentUser&&p.criador_por===_currentUser.usuario)||(p.vendedor&&_currentUser&&p.vendedor===_currentUser.usuario);
     return `<tr id="tr-${p.id}">
       <td class="mono" style="color:var(--muted)">${i+1}</td>
-      <td class="td-nome">${esc(p.nome)}</td>
+      <td class="td-nome" id="nome-${p.id}">${esc(p.nome)}${isAdmin?` <button onclick="editarNome('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 3px;" title="Editar nome">✏️</button>`:''}</td>
       <td>${cidTag(p.cidade)}</td>
       <td><span class="td-dis">${esc(p.discord)}</span></td>
       <td class="td-ite">${esc(p.itens).replace(/\n/g,'<br>')}</td>
@@ -1033,6 +1033,24 @@ function finish(id){
     toast('✅ Projeto finalizado!');
   });
 }
+function editarNome(id){
+  var p=P.find(x=>x.id===id);
+  if(!p)return;
+  var novoNome=prompt('Editar nome do cliente:',p.nome);
+  if(!novoNome||novoNome.trim()===''||novoNome.trim()===p.nome)return;
+  novoNome=novoNome.trim();
+  sbp('PATCH','projetos','id=eq.'+id,{nome:novoNome},function(err){
+    if(err){toast('❌ Erro ao editar nome');return;}
+    p.nome=novoNome;
+    // Atualiza todas as células de nome sem reload
+    document.querySelectorAll('[id^="nome-'+id+'"]').forEach(function(el){
+      var isAdmin=_currentUser&&_currentUser.role==='Administrador';
+      el.innerHTML=esc(novoNome)+(isAdmin?' <button onclick="editarNome(''+id+'')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 3px;" title="Editar nome">✏️</button>':'');
+    });
+    toast('✏️ Nome atualizado!');
+  });
+}
+
 function del(id){
   const proj=P.find(x=>x.id===id);
   if(!proj)return;

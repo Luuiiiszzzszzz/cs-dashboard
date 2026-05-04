@@ -755,8 +755,10 @@ function mkStats4(list){
 
 // ═══ TABLE ROWS ═══
 function mkRows(list, showStatus){
-  return list.map((p,i)=>`
-    <tr>
+  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
+  return list.map((p,i)=>{
+    const podeRemover=isAdmin||(p.criador_por&&_currentUser&&p.criador_por===_currentUser.usuario)||(p.vendedor&&_currentUser&&p.vendedor===_currentUser.usuario);
+    return `<tr id="tr-${p.id}">
       <td class="mono" style="color:var(--muted)">${i+1}</td>
       <td class="td-nome">${esc(p.nome)}</td>
       <td>${cidTag(p.cidade)}</td>
@@ -764,13 +766,14 @@ function mkRows(list, showStatus){
       <td class="td-ite">${esc(p.itens).replace(/\n/g,'<br>')}</td>
       <td class="td-val">${fval(p.valor)}</td>
       <td>${chip(p.vendedor)}</td>
-      ${showStatus?`<td>${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>`:''}
+      ${showStatus?`<td id="st-${p.id}">${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>`:''}
       <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date)}</td>
-      <td><div class="acts">
-        ${p.status==='pending'?`<button class="btn btn-sm btn-fin" onclick="finish('${p.id}')">✅ Finalizar</button>`:'<span style="color:var(--grn);font-size:11px;font-weight:600">✓</span>'}
-        <button class="btn btn-sm btn-del" onclick="del('${p.id}')">✕</button>
+      <td><div class="acts" id="acts-${p.id}">
+        ${p.status==='pending'?`<button class="btn btn-sm btn-fin" id="btn-fin-${p.id}" onclick="finish('${p.id}')">✅ Finalizar</button>`:'<span style="color:var(--grn);font-size:11px;font-weight:600">✓ Finalizado</span>'}
+        ${podeRemover?`<button class="btn btn-sm btn-del" onclick="del('${p.id}')">✕</button>`:''}
       </div></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function setTbl(tbId,emId,ctId,list,showStatus){
@@ -1004,11 +1007,28 @@ function setRfCidade(val,el){
 // ═══ ACTIONS ═══
 function finish(id){
   if(!confirm('Finalizar este projeto?'))return;
+  var btn=document.getElementById('btn-fin-'+id);
+  if(btn){btn.disabled=true;btn.textContent='...';}
   sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
-    if(err){toast('Erro ao finalizar');return;}
-    const p=P.find(x=>x.id===id);
-    if(p)p.status='done';
-    rdr(curPage);
+    if(err){toast('Erro ao finalizar');if(btn){btn.disabled=false;btn.textContent='✅ Finalizar';}return;}
+    var p=P.find(x=>x.id===id);
+    if(p) p.status='done';
+    // Atualiza badge de status sem reload
+    var stEl=document.getElementById('st-'+id);
+    if(stEl) stEl.innerHTML='<span class="badge b-don">✅ Finalizado</span>';
+    // Remove botão finalizar, deixa só ✓
+    var acts=document.getElementById('acts-'+id);
+    if(acts){
+      var isAdmin=_currentUser&&_currentUser.role==='Administrador';
+      var podeRemover=isAdmin||(p&&p.criador_por&&_currentUser&&p.criador_por===_currentUser.usuario)||(p&&p.vendedor&&_currentUser&&p.vendedor===_currentUser.usuario);
+      acts.innerHTML='<span style="color:var(--grn);font-size:11px;font-weight:600">✓ Finalizado</span>'+(podeRemover?`<button class="btn btn-sm btn-del" onclick="del('${id}')">✕</button>`:'');
+    }
+    // Se estiver na página pendentes, remove a linha
+    if(curPage==='pendentes'){
+      var tr=document.getElementById('tr-'+id);
+      if(tr) tr.style.transition='opacity .3s', tr.style.opacity='0', setTimeout(function(){rdr('pendentes');},320);
+    }
+    updBadges();
     updateProfileStats();
     toast('✅ Projeto finalizado!');
   });

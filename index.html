@@ -277,60 +277,11 @@ select option{background:var(--s2);}
     </div>
     <div class="topbar-right">
       <div class="tb-notif">🔔</div>
-      <div class="tb-user" id="tb-user-wrap" onclick="openProfileMenu()" style="cursor:pointer;position:relative;">
-        <div class="tb-avatar" id="tb-avatar-el" style="overflow:hidden;">MC</div>
+      <div class="tb-user">
+        <div class="tb-avatar">MC</div>
         <div>
-          <div class="tb-username" id="tb-username-el">Migue CS</div>
-          <div class="tb-email" id="tb-email-el">equipe@cs.com</div>
-        </div>
-      </div>
-      <!-- Profile Dropdown -->
-      <div id="profile-menu" style="display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:16px;padding:18px;z-index:500;min-width:270px;box-shadow:0 8px 40px #00000080;">
-        <!-- Header: Avatar + Nome + Role -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #1e2d45;">
-          <div id="pm-avatar" style="width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;overflow:hidden;flex-shrink:0;"></div>
-          <div style="flex:1;min-width:0;">
-            <div id="pm-name" style="font-size:15px;font-weight:800;color:#d8e8ff;"></div>
-            <div id="pm-role-badge" style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;"></div>
-            <div id="pm-since" style="font-size:10px;color:#4a6080;margin-top:3px;"></div>
-          </div>
-        </div>
-        <!-- Stats -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
-            <div id="pm-stat-total" style="font-size:22px;font-weight:900;color:#00c6ff;font-family:'JetBrains Mono',monospace;">0</div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Projetos</div>
-          </div>
-          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
-            <div id="pm-stat-pen" style="font-size:22px;font-weight:900;color:#f5c842;font-family:'JetBrains Mono',monospace;">0</div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Pendentes</div>
-          </div>
-          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
-            <div id="pm-stat-fin" style="font-size:22px;font-weight:900;color:#22d187;font-family:'JetBrains Mono',monospace;">0</div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Finalizados</div>
-          </div>
-          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
-            <div id="pm-stat-val" style="font-size:13px;font-weight:900;color:#a855f7;font-family:'JetBrains Mono',monospace;">R$0</div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Volume</div>
-          </div>
-        </div>
-        <!-- Discord -->
-        <div id="pm-discord-section" style="margin-bottom:10px;">
-          <div id="pm-discord-linked" style="display:none;background:#5865f215;border:1px solid #5865f240;border-radius:9px;padding:10px 12px;margin-bottom:8px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <img id="pm-discord-avatar" src="" style="width:30px;height:30px;border-radius:50%;border:2px solid #5865f2;" onerror="this.src=''">
-              <div>
-                <div style="font-size:10px;font-weight:700;color:#5865f2;">✓ Discord Vinculado</div>
-                <div id="pm-discord-username" style="font-size:12px;color:#d8e8ff;font-weight:600;"></div>
-              </div>
-            </div>
-          </div>
-          <button id="pm-discord-btn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
-            <span style="font-size:15px;">🎮</span> Vincular Discord
-          </button>
-        </div>
-        <div style="border-top:1px solid #1e2d45;padding-top:10px;">
-          <button onclick="logoutUser()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair da Conta</button>
+          <div class="tb-username">Migue CS</div>
+          <div class="tb-email">equipe@cs.com</div>
         </div>
       </div>
     </div>
@@ -439,7 +390,9 @@ select option{background:var(--s2);}
           <div class="page-title">👥 Time · Equipe CS</div>
           <div class="page-sub">Gerencie os membros e acessos da equipe</div>
         </div>
-
+        <div class="hdr-right">
+          <button class="btn btn-acc" onclick="openAddMember()">＋ Adicionar Membro</button>
+        </div>
       </div>
       <div class="stat-row" id="st-membros">
         <div class="stat-card sc-t"><div class="stat-lbl">Total Membros</div><div class="stat-num" id="sm-total">0</div></div>
@@ -530,7 +483,7 @@ select option{background:var(--s2);}
       </div>
       <div class="fg"><label>Discord ID</label><input id="f-discord" placeholder="Ex: 123456789"></div>
       <div class="fg"><label>Valor (R$)</label><input id="f-valor" type="number" placeholder="0.00" step="0.01"></div>
-      <div class="fg"><label>Membro CS</label><select id="f-vend"><option value="">Selecionar membro...</option></select></div>
+      <div class="fg"><label>Membro CS</label><input id="f-vend" placeholder="Nome do membro CS"></div>
       <div class="fg full"><label>Itens</label><textarea id="f-itens" placeholder="Ex: 2x Camiseta P, 1x Boné Azul..."></textarea></div>
     </div>
     <div class="modal-foot">
@@ -565,12 +518,14 @@ select option{background:var(--s2);}
 const CIDADES = ['Nobre','Santa','GrandeRP','MaltaRP','Real RP','KNG','Royal','District99','PrimeRP','Boomerang','GoatRP','Maresia','Fronteira','Universo'];
 const CIDADE_COLORS = ['#00c6ff','#22d187','#f59e0b','#ec4899','#a855f7','#06b6d4','#f75454','#34d399','#0077ff','#eab308','#a78bfa','#fc6d26','#ff6b35','#7c3aed'];
 
-// ═══ MEMBROS (carregado do Supabase) ═══
-let MEMBROS = [];
-const MEMBER_COLORS = ['#f59e0b','#06b6d4','#ec4899','#a78bfa','#34d399','#00c6ff','#f75454','#a855f7','#22d187','#0077ff'];
-const MEMBER_EMOJIS = ['🌻','🌊','🌸','💜','🌿','⚡','🔥','🌙','🎯','💎'];
-
-function saveM(){ /* agora usa Supabase */ }
+// ═══ MEMBROS padrão ═══
+let MEMBROS = JSON.parse(localStorage.getItem('cs_membros')||'null') || [
+  {id:'mel',    name:'Mel',     emoji:'🌻',color:'#f59e0b',cargo:'CS Pós-Vendas',acesso:true},
+  {id:'migue',  name:'Migue',   emoji:'🌊',color:'#06b6d4',cargo:'CS Pós-Vendas',acesso:true},
+  {id:'neew',   name:'Neew',    emoji:'🌸',color:'#ec4899',cargo:'CS Pós-Vendas',acesso:true},
+  {id:'luisa',  name:'Luisa',   emoji:'💜',color:'#a78bfa',cargo:'CS Pós-Vendas',acesso:true},
+  {id:'juniola',name:'Juniola', emoji:'🌿',color:'#34d399',cargo:'CS Pós-Vendas',acesso:true},
+];
 
 // ═══ PROJETOS (Supabase) ═══
 let P = [];
@@ -598,19 +553,18 @@ function sbp(method, path, params, body, cb){
 
 function loadP(cb){
   sbp('GET','projetos','select=*&order=created_at.desc',null,function(err,d){
+    // Normalize column names (Supabase has capitalized, app uses lowercase)
     P=(d||[]).map(function(p){
-      var val=parseFloat(p.Valor||p.valor||0)||0;
       return {
         id: p.id,
         nome: p.Nome||p.nome||'',
         cidade: p.Cidade||p.cidade||'',
         discord: p.Discord||p.discord||'',
         itens: p.itens||'',
-        valor: val,
+        valor: p.Valor||p.valor||0,
         vendedor: p.vendedor||'',
         status: p.status||'pending',
-        date: p.date||p.created_at||new Date().toISOString(),
-        criador_por: p.criador_por||p.vendedor||''
+        date: p.date||p.created_at||new Date().toISOString()
       };
     });
     if(cb)cb();
@@ -670,6 +624,7 @@ function goPage(id){
   const meta=PAGE_META[id];
   if(meta){
     document.getElementById('breadcrumb').innerHTML=meta.bc;
+    // Abre seção sidebar
     const sbItem=document.getElementById('sb-'+meta.sb);
     const sbSub=document.getElementById('sub-'+meta.sb);
     if(sbItem&&sbSub){
@@ -695,22 +650,6 @@ function populateSelects(){
   if(mr) mr.innerHTML=mems;
 }
 
-function loadUsuariosParaSelect(){
-  sbp('GET','cs_usuarios','select=usuario,role&aprovado=eq.true&order=usuario.asc',null,function(err,users){
-    var fv=document.getElementById('f-vend');
-    if(!fv)return;
-    users=users||[];
-    // Se usuário logado não é admin, pré-seleciona ele mesmo
-    var cur=_currentUser?_currentUser.usuario:'';
-    var isAdmin=_currentUser&&_currentUser.role==='Administrador';
-    fv.innerHTML='<option value="">Selecionar membro...</option>'+users.filter(function(u){return u.role!=='Administrador';}).map(function(u){
-      return '<option value="'+u.usuario+'"'+(u.usuario===cur&&!isAdmin?' selected':'')+'>'+u.usuario+'</option>';
-    }).join('');
-    if(!isAdmin){fv.value=cur;fv.disabled=true;}
-    else{fv.disabled=false;}
-  });
-}
-
 // ═══ BADGES ═══
 function updBadges(){
   document.getElementById('nb-sol').textContent = P.length;
@@ -732,25 +671,22 @@ function mkStats4(list){
 
 // ═══ TABLE ROWS ═══
 function mkRows(list, showStatus){
-  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
-  return list.map((p,i)=>{
-    const podeRemover=isAdmin||(p.criador_por&&_currentUser&&p.criador_por===_currentUser.usuario)||(p.vendedor&&_currentUser&&p.vendedor===_currentUser.usuario);
-    return `<tr id="tr-${p.id}">
+  return list.map((p,i)=>`
+    <tr>
       <td class="mono" style="color:var(--muted)">${i+1}</td>
-      <td class="td-nome" id="nome-${p.id}">${esc(p.nome)}${isAdmin?` <button onclick="editarNome('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 3px;" title="Editar nome">✏️</button>`:''}</td>
+      <td class="td-nome">${esc(p.nome)}</td>
       <td>${cidTag(p.cidade)}</td>
       <td><span class="td-dis">${esc(p.discord)}</span></td>
       <td class="td-ite">${esc(p.itens).replace(/\n/g,'<br>')}</td>
       <td class="td-val">${fval(p.valor)}</td>
       <td>${chip(p.vendedor)}</td>
-      ${showStatus?`<td id="st-${p.id}">${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>`:''}
+      ${showStatus?`<td>${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>`:''}
       <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date)}</td>
-      <td><div class="acts" id="acts-${p.id}">
-        ${p.status==='pending'?`<button class="btn btn-sm btn-fin" id="btn-fin-${p.id}" onclick="finish('${p.id}')">✅ Finalizar</button>`:'<span style="color:var(--grn);font-size:11px;font-weight:600">✓ Finalizado</span>'}
-        ${podeRemover?`<button class="btn btn-sm btn-del" onclick="del('${p.id}')">✕</button>`:''}
+      <td><div class="acts">
+        ${p.status==='pending'?`<button class="btn btn-sm btn-fin" onclick="finish('${p.id}')">✅ Finalizar</button>`:'<span style="color:var(--grn);font-size:11px;font-weight:600">✓</span>'}
+        <button class="btn btn-sm btn-del" onclick="del('${p.id}')">✕</button>
       </div></td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 
 function setTbl(tbId,emId,ctId,list,showStatus){
@@ -830,53 +766,37 @@ function rMembros(){
   document.getElementById('sm-proj').textContent=P.length;
   const grid=document.getElementById('member-grid');
   if(!grid) return;
-  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
-  grid.innerHTML=MEMBROS.map(m=>{
-    const total=P.filter(p=>p.vendedor===m.name).length;
-    const pen=P.filter(p=>p.vendedor===m.name&&p.status==='pending').length;
-    const fin=P.filter(p=>p.vendedor===m.name&&p.status==='done').length;
-    const avatarHtml=m.discord_avatar
-      ?`<img src="${m.discord_avatar}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:2px solid ${m.color}60;" onerror="this.style.display='none'">`
-      :`<div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>`;
-    const discordTag=m.discord_username?`<span style="font-size:10px;color:#5865f2;font-weight:600;">🎮 ${esc(m.discord_username)}</span>`:'';
-    return `<div class="member-card">
-      ${avatarHtml}
+  grid.innerHTML=MEMBROS.map(m=>`
+    <div class="member-card">
+      <div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>
       <div class="mc-info">
         <div class="mc-name">${esc(m.name)}</div>
         <div class="mc-role" style="color:${m.color}99">${esc(m.cargo)}</div>
-        ${discordTag}
-        <div style="margin-top:5px;display:flex;gap:10px;font-size:10px;color:var(--muted);">
-          <span>📋 ${total} proj.</span>
-          <span style="color:var(--yel)">🕐 ${pen} pend.</span>
-          <span style="color:var(--grn)">✅ ${fin} fin.</span>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:7px;">
+          <span style="font-size:10px;color:var(--muted);">Acesso:</span>
+          <label class="toggle"><input type="checkbox" ${m.acesso?'checked':''} onchange="toggleAccess('${m.id}',this.checked)"><span class="toggle-slider"></span></label>
+          <span style="font-size:10px;color:${m.acesso?'var(--grn)':'var(--muted)'};">${m.acesso?'Ativo':'Inativo'}</span>
+        </div>
+        <div style="margin-top:4px;font-size:10px;color:var(--muted);">
+          ${P.filter(p=>p.vendedor===m.name).length} projetos ·
+          ${P.filter(p=>p.vendedor===m.name&&p.status==='pending').length} pendentes
         </div>
       </div>
       <div class="mc-actions">
-        ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')" title="Remover membro">✕</button>`:''}
+        <button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')">✕</button>
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  `).join('');
 }
 
 function toggleAccess(id, val){
-  var m=MEMBROS.find(x=>x.id===id);
-  if(!m)return;
-  sbp('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{aprovado:val},function(err){
-    if(!err){m.acesso=val;rMembros();toast(val?'✅ Acesso ativado':'🔒 Acesso removido');}
-    else toast('❌ Erro ao atualizar acesso');
-  });
+  const m=MEMBROS.find(x=>x.id===id);
+  if(m){ m.acesso=val; saveM(); rMembros(); toast(val?'✅ Acesso ativado':'🔒 Acesso removido'); }
 }
 function removeMember(id){
-  if(!confirm('Remover este membro da equipe? O usuário perderá o acesso.')) return;
-  var m=MEMBROS.find(x=>x.id===id);
-  if(!m)return;
-  sbp('DELETE','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),null,function(err){
-    if(err){toast('❌ Erro ao remover membro');return;}
-    MEMBROS=MEMBROS.filter(x=>x.id!==id);
-    populateSelects();
-    rMembros();
-    toast('🗑 Membro removido');
-  });
+  if(!confirm('Remover este membro?')) return;
+  MEMBROS=MEMBROS.filter(x=>x.id!==id);
+  saveM(); populateSelects(); rMembros(); toast('🗑 Membro removido');
 }
 function openAddMember(){
   ['m-nome','m-emoji','m-cor','m-cargo'].forEach(i=>document.getElementById(i).value='');
@@ -983,53 +903,19 @@ function setRfCidade(val,el){
 
 // ═══ ACTIONS ═══
 function finish(id){
-  if(!confirm('Finalizar este projeto?'))return;
-  var btn=document.getElementById('btn-fin-'+id);
-  if(btn){btn.disabled=true;btn.textContent='...';}
   sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
-    if(err){toast('Erro ao finalizar');if(btn){btn.disabled=false;btn.textContent='✅ Finalizar';}return;}
-    var p=P.find(x=>x.id===id);
-    if(p) p.status='done';
-    updBadges();
-    updateProfileStats();
-    toast('✅ Projeto finalizado!');
-    // Vai direto para página Finalizados
-    setTimeout(function(){goPage('finalizados');},400);
+    if(err){toast('Erro ao finalizar');return;}
+    const p=P.find(x=>x.id===id);
+    if(p)p.status='done';
+    rdr(curPage);toast('✅ Projeto finalizado!');
   });
 }
-function editarNome(id){
-  var p=P.find(x=>x.id===id);
-  if(!p)return;
-  var novoNome=prompt('Editar nome do cliente:',p.nome);
-  if(!novoNome||novoNome.trim()===''||novoNome.trim()===p.nome)return;
-  novoNome=novoNome.trim();
-  sbp('PATCH','projetos','id=eq.'+id,{nome:novoNome},function(err){
-    if(err){toast('❌ Erro ao editar nome');return;}
-    p.nome=novoNome;
-    // Atualiza todas as células de nome sem reload
-    document.querySelectorAll('[id^="nome-'+id+'"]').forEach(function(el){
-      var isAdmin=_currentUser&&_currentUser.role==='Administrador';
-      el.innerHTML=esc(novoNome)+(isAdmin?' <button onclick="editarNome(''+id+'')" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 3px;" title="Editar nome">✏️</button>':'');
-    });
-    toast('✏️ Nome atualizado!');
-  });
-}
-
 function del(id){
-  const proj=P.find(x=>x.id===id);
-  if(!proj)return;
-  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
-  const isCriador=_currentUser&&(proj.criador_por===_currentUser.usuario||proj.vendedor===_currentUser.usuario);
-  if(!isAdmin&&!isCriador){
-    toast('❌ Sem permissão para remover este projeto.');return;
-  }
   if(!confirm('Remover este projeto?'))return;
   sbp('DELETE','projetos','id=eq.'+id,null,function(err){
     if(err){toast('Erro ao remover');return;}
     P=P.filter(x=>x.id!==id);
-    rdr(curPage);
-    updateProfileStats();
-    toast('🗑 Removido');
+    rdr(curPage);toast('🗑 Removido');
   });
 }
 
@@ -1037,11 +923,8 @@ function del(id){
 let _fixedVend=null;
 function openModal(vend){
   _fixedVend=vend;
-  loadUsuariosParaSelect();
-  setTimeout(function(){
-    const fi=document.getElementById('f-vend');
-    if(fi&&vend){fi.value=vend;fi.disabled=true;}
-  },300);
+  const fi=document.getElementById('f-vend');
+  if(fi){ if(vend){fi.value=vend;fi.disabled=true;}else{fi.value='';fi.disabled=false;} }
   document.getElementById('overlay-proj').classList.add('open');
 }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -1053,23 +936,15 @@ function addProj(){
   const vendedor=document.getElementById('f-vend').value.trim();
   const itens=document.getElementById('f-itens').value.trim();
   if(!nome||!cidade||!vendedor){ alert('Preencha Nome, Cidade e Membro CS.'); return; }
-  const criador=_currentUser?_currentUser.usuario:'';
-  const proj={nome,cidade,discord,itens,valor,vendedor,status:'pending',date:new Date().toISOString(),criador_por:criador};
+  const proj={Nome:nome,Cidade:cidade,Discord:discord,itens,Valor:valor,vendedor,status:'pending',date:new Date().toISOString()};
   sbp('POST','projetos','',proj,function(err,d){
     if(err||!d||!d.length){alert('Erro ao salvar projeto.');return;}
-    var novo=d[0];
-    // normalizar
-    var pnorm={id:novo.id,nome:novo.nome||novo.Nome||nome,cidade:novo.cidade||novo.Cidade||cidade,discord:novo.discord||novo.Discord||discord,itens:novo.itens||itens,valor:novo.valor||novo.Valor||valor,vendedor:novo.vendedor||vendedor,status:novo.status||'pending',date:novo.date||novo.created_at||new Date().toISOString(),criador_por:novo.criador_por||criador};
-    P.unshift(pnorm);
+    P.unshift(d[0]);
     ['f-nome','f-discord','f-valor','f-itens'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f-cidade').value='';
-    document.getElementById('f-vend').value='';
-    document.getElementById('f-vend').disabled=false;
-    closeModal('overlay-proj');
-    rdr(curPage);
-    updateProfileStats();
-    toast('📦 Solicitação adicionada!');
-  });
+    document.getElementById('f-vend').value=''; document.getElementById('f-vend').disabled=false;
+    closeModal('overlay-proj'); rdr(curPage);
+  }); populateSelects(); toast('📦 Solicitação adicionada!');
 }
 
 // ═══ EXPORT ═══
@@ -1099,7 +974,7 @@ function toast(msg){
 function dashInit(){
   populateSelects();
   buildCidadeChips();
-  loadP(function(){rdr('solicitacoes');});
+  rdr('solicitacoes');
 }
 
 
@@ -1173,27 +1048,6 @@ function dashInit(){
 // ═══ SUPABASE CONFIG ═══
 var SBU='https://lomtwfoccesaejcywail.supabase.co';
 var SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
-
-function loadMembros(cb){
-  sbp('GET','cs_usuarios','select=*&role=neq.Administrador&aprovado=eq.true&order=usuario.asc',null,function(err,users){
-    users=users||[];
-    MEMBROS=users.map(function(u,i){
-      return {
-        id: String(u.id||u.usuario),
-        name: u.usuario,
-        emoji: MEMBER_EMOJIS[i%MEMBER_EMOJIS.length],
-        color: MEMBER_COLORS[i%MEMBER_COLORS.length],
-        cargo: u.role||'CS Pós-Vendas',
-        acesso: u.aprovado!==false,
-        discord_avatar: u.discord_avatar||null,
-        discord_username: u.discord_username||null,
-        _raw: u
-      };
-    });
-    populateSelects();
-    if(cb)cb();
-  });
-}
 
 function sb(method,table,params,body,cb){
   var url=SBU+'/rest/v1/'+table+(params?'?'+params:'');
@@ -1272,116 +1126,26 @@ function LREG(){
   });
 }
 
-var _currentUser=null;
-var BOT_URL='https://bot-cs-p-s-venda-production.up.railway.app';
-
 function LINIT(usr){
-  _currentUser=usr;
   document.getElementById('LG').style.display='none';
-  var nm=document.getElementById('tb-username-el');if(nm)nm.textContent=usr.usuario;
-  var em=document.getElementById('tb-email-el');if(em)em.textContent=usr.role;
-  var pmn=document.getElementById('pm-name');if(pmn)pmn.textContent=usr.usuario;
-  // Role badge com cor
-  var badge=document.getElementById('pm-role-badge');
-  if(badge){
-    var isAdmin=usr.role==='Administrador';
-    badge.textContent=(isAdmin?'👑 ':'🛡️ ')+usr.role;
-    badge.style.background=isAdmin?'#00c6ff20':'#22d18720';
-    badge.style.color=isAdmin?'#00c6ff':'#22d187';
-    badge.style.border='1px solid '+(isAdmin?'#00c6ff40':'#22d18740');
+  var nm=document.querySelector('.tb-username');if(nm)nm.textContent=usr.usuario;
+  var av=document.querySelector('.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
+  var em=document.querySelector('.tb-email');if(em)em.textContent=usr.role;
+  // Add logout button
+  var tbr=document.querySelector('.topbar-r');
+  if(tbr&&!document.getElementById('_LB')){
+    var b=document.createElement('button');
+    b.id='_LB';b.textContent='⏻ Sair';
+    b.style.cssText='background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
+    b.onmouseover=function(){b.style.color='#f75454';};
+    b.onmouseout=function(){b.style.color='#4a6080';};
+    b.onclick=function(){sessionStorage.removeItem(SK);location.reload();};
+    tbr.appendChild(b);
   }
-  setAvatar(usr.usuario,null);
-  // checkDiscordLinked desabilitado temporariamente
   if(usr.role==='Administrador'){
     var sb2=document.getElementById('sb-acessos');if(sb2)sb2.style.display='flex';
   }
-  checkOAuthReturn();
   if(typeof dashInit==='function')dashInit();
-  // Atualiza stats do perfil após carregar dados
-  setTimeout(function(){try{updateProfileStats();}catch(e){}}, 2000);
-  document.addEventListener('click',function(e){
-    var menu=document.getElementById('profile-menu');
-    var wrap=document.getElementById('tb-user-wrap');
-    if(menu&&wrap&&!menu.contains(e.target)&&!wrap.contains(e.target)){menu.style.display='none';}
-  });
-}
-
-function updateProfileStats(){
-  if(!_currentUser||typeof P==='undefined') return;
-  var nome=_currentUser.usuario;
-  var isAdmin=_currentUser.role==='Administrador';
-  var meusProjetos=isAdmin?P:P.filter(function(p){return p.vendedor&&p.vendedor.toLowerCase()===nome.toLowerCase();});
-  var pen=meusProjetos.filter(function(p){return p.status==='pending';}).length;
-  var fin=meusProjetos.filter(function(p){return p.status==='done';}).length;
-  var vol=meusProjetos.reduce(function(s,p){return s+(p.valor||0);},0);
-  var el=document.getElementById('pm-stat-total');if(el)el.textContent=meusProjetos.length;
-  var ep=document.getElementById('pm-stat-pen');if(ep)ep.textContent=pen;
-  var ef=document.getElementById('pm-stat-fin');if(ef)ef.textContent=fin;
-  var ev=document.getElementById('pm-stat-val');
-  if(ev){
-    if(vol>=1000){ev.textContent='R$'+(vol/1000).toFixed(1)+'k';}
-    else{ev.textContent='R$'+Math.round(vol);}
-  }
-}
-
-function setAvatar(usuario,avatarUrl){
-  var av=document.getElementById('tb-avatar-el');
-  var pma=document.getElementById('pm-avatar');
-  if(avatarUrl){
-    if(av){av.innerHTML='<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';}
-    if(pma){pma.innerHTML='<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';}
-  } else {
-    var ini=usuario.substring(0,2).toUpperCase();
-    if(av){av.textContent=ini;}
-    if(pma){pma.textContent=ini;}
-  }
-}
-
-function openProfileMenu(){
-  var m=document.getElementById('profile-menu');
-  if(m)m.style.display=m.style.display==='none'?'block':'none';
-}
-
-function logoutUser(){sessionStorage.removeItem(SK);location.reload();}
-
-function vincularDiscord(){
-  if(!_currentUser)return;
-  window.location.href=BOT_URL+'/discord/login?usuario='+encodeURIComponent(_currentUser.usuario);
-}
-
-function checkDiscordLinked(usuario){
-  fetch(BOT_URL+'/discord/user/'+encodeURIComponent(usuario))
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){if(d&&d.discord_id)showDiscordLinked(d);})
-    .catch(function(){});
-}
-
-function showDiscordLinked(d){
-  var linked=document.getElementById('pm-discord-linked');
-  var btn=document.getElementById('pm-discord-btn');
-  var dav=document.getElementById('pm-discord-avatar');
-  var dun=document.getElementById('pm-discord-username');
-  if(linked)linked.style.display='block';
-  if(btn){btn.innerHTML='<span style="font-size:16px;">🔄</span> Reconectar Discord';}
-  if(dav&&d.discord_avatar)dav.src=d.discord_avatar;
-  if(dun)dun.textContent=d.discord_username||'';
-  if(d.discord_avatar)setAvatar(_currentUser?_currentUser.usuario:'',d.discord_avatar);
-}
-
-function checkOAuthReturn(){
-  var params=new URLSearchParams(window.location.search);
-  if(params.get('discord_ok')==='1'){
-    var avatar=decodeURIComponent(params.get('discord_avatar')||'');
-    var username=decodeURIComponent(params.get('discord_username')||'');
-    var id=params.get('discord_id')||'';
-    if(avatar)setAvatar(_currentUser?_currentUser.usuario:'',avatar);
-    showDiscordLinked({discord_id:id,discord_username:username,discord_avatar:avatar});
-    toast('✅ Discord vinculado com sucesso!');
-    window.history.replaceState({},'',window.location.pathname);
-  } else if(params.get('discord_error')){
-    toast('❌ Erro ao vincular Discord.');
-    window.history.replaceState({},'',window.location.pathname);
-  }
 }
 
 // ═══ ACESSOS PAGE ═══

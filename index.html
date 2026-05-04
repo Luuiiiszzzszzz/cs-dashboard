@@ -220,7 +220,7 @@ select option{background:var(--s2);}
   </div>
   <div class="sb-sub open" id="sub-equipe-cs">
     <div class="sb-sub-item active" onclick="goPage('solicitacoes')" id="ssi-solicitacoes">
-      <span class="sb-sub-dot"></span>Solicitações
+      <span class="sb-sub-dot"></span>Registros
       <span class="sb-badge" id="nb-sol">0</span>
     </div>
     <div class="sb-sub-item" onclick="goPage('pendentes')" id="ssi-pendentes">
@@ -237,7 +237,7 @@ select option{background:var(--s2);}
   <div class="sb-item" onclick="goPage('solicit-reg')" id="sb-solicit-reg" style="display:none">
     <div class="sbi-left">
       <span class="sbi-icon">📋</span>
-      <span>Solicitações</span>
+      <span>Registros</span>
     </div>
     <span class="sb-badge" id="badge-solicit" style="background:#f5c842;color:#000;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800">0</span>
   </div>
@@ -278,7 +278,7 @@ select option{background:var(--s2);}
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="breadcrumb" id="breadcrumb">Equipe CS › <span>Solicitações</span></div>
+      <div class="breadcrumb" id="breadcrumb">Equipe CS › <span>Registros</span></div>
     </div>
     <div class="topbar-right">
       <div class="tb-notif">🔔</div>
@@ -344,7 +344,7 @@ select option{background:var(--s2);}
     <div class="page active" id="page-solicitacoes">
       <div class="page-hdr">
         <div>
-          <div class="page-title">📋 Solicitações</div>
+          <div class="page-title">📋 Registros</div>
           <div class="page-sub">Todos os projetos registrados pela Equipe CS</div>
         </div>
         <div class="hdr-right">
@@ -363,7 +363,7 @@ select option{background:var(--s2);}
         </select>
       </div>
       <div class="tcard">
-        <div class="tcard-hdr"><span class="tcard-title">Todas as Solicitações</span><span class="tcard-count" id="ct-sol">—</span></div>
+        <div class="tcard-hdr"><span class="tcard-title">Todas as Registros</span><span class="tcard-count" id="ct-sol">—</span></div>
         <table><thead><tr><th>#</th><th>Nome</th><th>Cidade</th><th>Discord ID</th><th>Itens</th><th>Valor</th><th>Membro CS</th><th>Status</th><th>Data</th><th>Ações</th></tr></thead>
         <tbody id="tb-sol"></tbody></table>
         <div class="empty" id="em-sol" style="display:none"><div class="empty-ico">📋</div><p>Nenhuma solicitação ainda.</p></div>
@@ -429,7 +429,7 @@ select option{background:var(--s2);}
     <div class="page" id="page-solicit-reg">
       <div class="page-hdr">
         <div>
-          <div class="page-title">📋 Solicitações de Acesso</div>
+          <div class="page-title">📋 Registros</div>
           <div class="page-sub">Usuários aguardando aprovação para entrar no sistema</div>
         </div>
       </div>
@@ -619,7 +619,7 @@ function toggleSB(el, subId){
 
 // ═══ NAVEGAÇÃO ═══
 const PAGE_META = {
-  'solicitacoes':{ bc:'Equipe CS › <span>Solicitações</span>', sb:'equipe-cs', ssi:'solicitacoes' },
+  'solicitacoes':{ bc:'Equipe CS › <span>Registros</span>', sb:'equipe-cs', ssi:'solicitacoes' },
   'pendentes':   { bc:'Equipe CS › <span>Pendentes</span>',    sb:'equipe-cs', ssi:'pendentes' },
   'finalizados': { bc:'Equipe CS › <span>Finalizados</span>',  sb:'equipe-cs', ssi:'finalizados' },
   'membros':     { bc:'Time › <span>Membros</span>',           sb:'time',      ssi:'membros' },
@@ -735,7 +735,7 @@ function renderSolicitReg(){
   var badge=document.getElementById('badge-solicit');
   if(badge)badge.textContent=us.length;
   if(!us.length){
-    list.innerHTML='<div style="text-align:center;padding:48px;color:#4a6080"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600">Nenhuma solicitação pendente</div></div>';
+    list.innerHTML='<div style="text-align:center;padding:48px;color:#4a6080"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600">Nenhuma registro pendente</div></div>';
     return;
   }
   list.innerHTML=us.map(function(u){
@@ -1015,14 +1015,14 @@ function renderSolicitReg(){
   var badge=document.getElementById('badge-solicit');
   if(badge)badge.textContent=us.length||'0';
   if(!us.length){
-    list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhuma solicitação pendente</div></div>';
+    list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhuma registro pendente</div></div>';
     return;
   }
   list.innerHTML=us.map(function(u){
     return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
       +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
       +'<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--txt)">'+u.usuario+'</div>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">Aguardando aprovação de acesso</div></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">Aguardando aprovação do administrador</div></div>'
       +'<div style="display:flex;gap:8px">'
       +'<button onclick="aprovSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:linear-gradient(135deg,#22d187,#0fa868);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ Aprovar</button>'
       +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
@@ -1164,7 +1164,9 @@ function LREG(){
   if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe.','ERR');return;}
   us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS',pendente:true});
   SU(us);
-  LM('LMR','✅ Solicitação enviada! Aguarde aprovação.','OK');
+  LM('LMR','✅ Registro enviado! Aguarde o admin aprovar seu acesso no painel de Registros.','OK');
+  // Auto switch to login tab after 3 seconds
+  setTimeout(function(){LSW('in');},3000);
   ['LRU','LRP','LRP2'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});
 }
 

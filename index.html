@@ -548,7 +548,7 @@ function sbp(method, path, params, body, cb){
 }
 
 function loadP(cb){
-  sbp('GET','projetos','select=*&order=date.desc',null,function(err,d){
+  sbp('GET','projetos','select=*',null,function(err,d){
     // Normalize column names (Supabase has capitalized, app uses lowercase)
     P=(d||[]).map(function(p){
       return {

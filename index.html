@@ -203,19 +203,6 @@ select option{background:var(--s2);}
 </head>
 <body>
 
-<!-- ═══ SIDEBAR ═══ -->
-
-
-    <div class="admin-card-sub">Aprove ou remova usuários da equipe CS</div>
-    <div class="admin-tabs">
-      <button class="admin-tab-btn active" onclick="adminTab('pending',this)">🕐 Pendentes</button>
-      <button class="admin-tab-btn" onclick="adminTab('approved',this)">✅ Aprovados</button>
-    </div>
-    <div class="ulist" id="admin-ulist"></div>
-    <button class="admin-back-btn" onclick="closeAdmin()">← Voltar ao painel</button>
-  </div>
-</div>
-
 <nav class="sidebar">
   <div class="sb-top">
     <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">SETORES</div>
@@ -1043,12 +1030,23 @@ function LREG(){
   if(!code){LM('LMR','Digite o código de convite.','ERR');return;}
   if(!u||!p){LM('LMR','Preencha todos os campos.','ERR');return;}
   if(p.length<4){LM('LMR','Senha muito curta (mín. 4).','ERR');return;}
-  var codes=GC();
-  var valid=codes.find(function(c){return c.code===code&&!c.used;});
-  if(!valid){LM('LMR','Código inválido ou já utilizado.','ERR');return;}
+  // Validate: check global used codes list + local codes
+  var usedKey='_cs_used';
+  var used=JSON.parse(localStorage.getItem(usedKey)||'[]');
+  if(used.indexOf(code)>=0){LM('LMR','Código já foi utilizado.','ERR');return;}
+  // Check if code exists in global valid codes (stored by admin under shared key)
+  var validCodes=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
+  // Also check local codes
+  var localCodes=GC();
+  var inLocal=localCodes.find(function(c){return c.code===code&&!c.used;});
+  var inValid=validCodes.indexOf(code)>=0;
+  if(!inLocal&&!inValid){LM('LMR','Código inválido. Peça um novo ao administrador.','ERR');return;}
   var us=GU();
   if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe. Escolha outro.','ERR');return;}
-  valid.used=true;valid.usedBy=u;SC(codes);
+  // Mark as used
+  used.push(code);
+  localStorage.setItem(usedKey,JSON.stringify(used));
+  if(inLocal){inLocal.used=true;inLocal.usedBy=u;SC(localCodes);}
   us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS'});
   SU(us);
   LM('LMR','✅ Conta criada! Clique em Entrar.','OK');
@@ -1135,6 +1133,10 @@ function gerarCodigo(){
   var codes=GC();
   codes.push({code:code,created:Date.now(),used:false,usedBy:null});
   SC(codes);
+  // Also save to shared valid codes list so member can validate
+  var valid=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
+  valid.push(code);
+  localStorage.setItem('_cs_valid_codes',JSON.stringify(valid));
   var div=document.getElementById('novo-cod');
   if(div){
     div.innerHTML='<div style="background:#00c6ff15;border:2px solid #00c6ff40;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-top:4px">'
@@ -1146,8 +1148,11 @@ function gerarCodigo(){
 }
 
 function copCod(code){
-  navigator.clipboard.writeText(code).catch(function(){});
-  alert('Código copiado: '+code+'\n\nEnvie pelo Discord para o membro!');
+  var link=window.location.origin+window.location.pathname+'?code='+code;
+  navigator.clipboard.writeText(link).catch(function(){
+    navigator.clipboard.writeText(code).catch(function(){});
+  });
+  alert('Link copiado!\n\n'+link+'\n\nEnvie esse link pelo Discord. A pessoa abre e o código já vem preenchido!');
 }
 
 function delCod(code){
@@ -1161,6 +1166,24 @@ function remMembro(id){
   SU(GU().filter(function(u){return u.id!==id;}));
   renderAcessos();
 }
+
+// Auto-fill code from URL
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var urlCode=params.get('code');
+  if(urlCode){
+    document.getElementById('LG').style.display='flex';
+    LSW('rg');
+    var el=document.getElementById('LRC');
+    if(el)el.value=urlCode.toUpperCase();
+    // Register URL code as valid
+    var valid=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
+    if(valid.indexOf(urlCode.toUpperCase())<0){
+      valid.push(urlCode.toUpperCase());
+      localStorage.setItem('_cs_valid_codes',JSON.stringify(valid));
+    }
+  }
+})();
 
 // Init
 var s=sessionStorage.getItem(SK);

@@ -285,29 +285,53 @@ select option{background:var(--s2);}
         </div>
       </div>
       <!-- Profile Dropdown -->
-      <div id="profile-menu" style="display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:14px;z-index:500;min-width:220px;box-shadow:0 8px 32px #00000060;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1e2d45;">
-          <div id="pm-avatar" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#000;overflow:hidden;flex-shrink:0;"></div>
-          <div>
-            <div id="pm-name" style="font-size:14px;font-weight:700;color:#d8e8ff;"></div>
-            <div id="pm-role" style="font-size:11px;color:#4a6080;"></div>
+      <div id="profile-menu" style="display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:16px;padding:18px;z-index:500;min-width:270px;box-shadow:0 8px 40px #00000080;">
+        <!-- Header: Avatar + Nome + Role -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #1e2d45;">
+          <div id="pm-avatar" style="width:52px;height:52px;border-radius:13px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;overflow:hidden;flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div id="pm-name" style="font-size:15px;font-weight:800;color:#d8e8ff;"></div>
+            <div id="pm-role-badge" style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;"></div>
+            <div id="pm-since" style="font-size:10px;color:#4a6080;margin-top:3px;"></div>
           </div>
         </div>
-        <div id="pm-discord-section">
-          <div id="pm-discord-linked" style="display:none;background:#5865f215;border:1px solid #5865f240;border-radius:9px;padding:10px 12px;margin-bottom:10px;">
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
+            <div id="pm-stat-total" style="font-size:22px;font-weight:900;color:#00c6ff;font-family:'JetBrains Mono',monospace;">0</div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Projetos</div>
+          </div>
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
+            <div id="pm-stat-pen" style="font-size:22px;font-weight:900;color:#f5c842;font-family:'JetBrains Mono',monospace;">0</div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Pendentes</div>
+          </div>
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
+            <div id="pm-stat-fin" style="font-size:22px;font-weight:900;color:#22d187;font-family:'JetBrains Mono',monospace;">0</div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Finalizados</div>
+          </div>
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:10px;padding:10px 12px;text-align:center;">
+            <div id="pm-stat-val" style="font-size:13px;font-weight:900;color:#a855f7;font-family:'JetBrains Mono',monospace;">R$0</div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;">Volume</div>
+          </div>
+        </div>
+        <!-- Discord -->
+        <div id="pm-discord-section" style="margin-bottom:10px;">
+          <div id="pm-discord-linked" style="display:none;background:#5865f215;border:1px solid #5865f240;border-radius:9px;padding:10px 12px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;gap:8px;">
-              <img id="pm-discord-avatar" src="" style="width:28px;height:28px;border-radius:50%;border:2px solid #5865f2;" onerror="this.src=''">
+              <img id="pm-discord-avatar" src="" style="width:30px;height:30px;border-radius:50%;border:2px solid #5865f2;" onerror="this.src=''">
               <div>
-                <div style="font-size:11px;font-weight:700;color:#5865f2;">Discord Vinculado</div>
+                <div style="font-size:10px;font-weight:700;color:#5865f2;">✓ Discord Vinculado</div>
                 <div id="pm-discord-username" style="font-size:12px;color:#d8e8ff;font-weight:600;"></div>
               </div>
             </div>
           </div>
-          <button id="pm-discord-btn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:8px;">
-            <span style="font-size:16px;">⚙</span> Vincular Discord
+          <button id="pm-discord-btn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+            <span style="font-size:15px;">🎮</span> Vincular Discord
           </button>
         </div>
-        <button onclick="logoutUser()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>
+        <div style="border-top:1px solid #1e2d45;padding-top:10px;">
+          <button onclick="logoutUser()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair da Conta</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1160,7 +1184,15 @@ function LINIT(usr){
   var nm=document.getElementById('tb-username-el');if(nm)nm.textContent=usr.usuario;
   var em=document.getElementById('tb-email-el');if(em)em.textContent=usr.role;
   var pmn=document.getElementById('pm-name');if(pmn)pmn.textContent=usr.usuario;
-  var pmr=document.getElementById('pm-role');if(pmr)pmr.textContent=usr.role;
+  // Role badge com cor
+  var badge=document.getElementById('pm-role-badge');
+  if(badge){
+    var isAdmin=usr.role==='Administrador';
+    badge.textContent=(isAdmin?'👑 ':'🛡️ ')+usr.role;
+    badge.style.background=isAdmin?'#00c6ff20':'#22d18720';
+    badge.style.color=isAdmin?'#00c6ff':'#22d187';
+    badge.style.border='1px solid '+(isAdmin?'#00c6ff40':'#22d18740');
+  }
   setAvatar(usr.usuario,null);
   checkDiscordLinked(usr.usuario);
   if(usr.role==='Administrador'){
@@ -1168,11 +1200,31 @@ function LINIT(usr){
   }
   checkOAuthReturn();
   if(typeof dashInit==='function')dashInit();
+  // Atualiza stats do perfil após carregar dados
+  setTimeout(updateProfileStats, 1200);
   document.addEventListener('click',function(e){
     var menu=document.getElementById('profile-menu');
     var wrap=document.getElementById('tb-user-wrap');
     if(menu&&wrap&&!menu.contains(e.target)&&!wrap.contains(e.target)){menu.style.display='none';}
   });
+}
+
+function updateProfileStats(){
+  if(!_currentUser||typeof P==='undefined') return;
+  var nome=_currentUser.usuario;
+  var isAdmin=_currentUser.role==='Administrador';
+  var meusProjetos=isAdmin?P:P.filter(function(p){return p.vendedor&&p.vendedor.toLowerCase()===nome.toLowerCase();});
+  var pen=meusProjetos.filter(function(p){return p.status==='pending';}).length;
+  var fin=meusProjetos.filter(function(p){return p.status==='done';}).length;
+  var vol=meusProjetos.reduce(function(s,p){return s+(p.valor||0);},0);
+  var el=document.getElementById('pm-stat-total');if(el)el.textContent=meusProjetos.length;
+  var ep=document.getElementById('pm-stat-pen');if(ep)ep.textContent=pen;
+  var ef=document.getElementById('pm-stat-fin');if(ef)ef.textContent=fin;
+  var ev=document.getElementById('pm-stat-val');
+  if(ev){
+    if(vol>=1000){ev.textContent='R$'+(vol/1000).toFixed(1)+'k';}
+    else{ev.textContent='R$'+Math.round(vol);}
+  }
 }
 
 function setAvatar(usuario,avatarUrl){

@@ -698,8 +698,7 @@ function goPage(id){
       sbSub.classList.add('open'); sbItem.classList.add('open'); sbItem.classList.add('active');
     }
   }
-  // Recarrega dados do Supabase sempre que navega
-  loadP(function(){rdr(id);updBadges();updateProfileStats();});
+  rdr(id);
 }
 
 // ═══ POPULAT SELECTS ═══
@@ -1013,24 +1012,11 @@ function finish(id){
     if(err){toast('Erro ao finalizar');if(btn){btn.disabled=false;btn.textContent='✅ Finalizar';}return;}
     var p=P.find(x=>x.id===id);
     if(p) p.status='done';
-    // Atualiza badge de status sem reload
-    var stEl=document.getElementById('st-'+id);
-    if(stEl) stEl.innerHTML='<span class="badge b-don">✅ Finalizado</span>';
-    // Remove botão finalizar, deixa só ✓
-    var acts=document.getElementById('acts-'+id);
-    if(acts){
-      var isAdmin=_currentUser&&_currentUser.role==='Administrador';
-      var podeRemover=isAdmin||(p&&p.criador_por&&_currentUser&&p.criador_por===_currentUser.usuario)||(p&&p.vendedor&&_currentUser&&p.vendedor===_currentUser.usuario);
-      acts.innerHTML='<span style="color:var(--grn);font-size:11px;font-weight:600">✓ Finalizado</span>'+(podeRemover?`<button class="btn btn-sm btn-del" onclick="del('${id}')">✕</button>`:'');
-    }
-    // Se estiver na página pendentes, remove a linha
-    if(curPage==='pendentes'){
-      var tr=document.getElementById('tr-'+id);
-      if(tr) tr.style.transition='opacity .3s', tr.style.opacity='0', setTimeout(function(){rdr('pendentes');},320);
-    }
     updBadges();
     updateProfileStats();
     toast('✅ Projeto finalizado!');
+    // Vai direto para página Finalizados
+    setTimeout(function(){goPage('finalizados');},400);
   });
 }
 function editarNome(id){

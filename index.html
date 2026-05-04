@@ -277,12 +277,37 @@ select option{background:var(--s2);}
     </div>
     <div class="topbar-right">
       <div class="tb-notif">🔔</div>
-      <div class="tb-user">
-        <div class="tb-avatar">MC</div>
+      <div class="tb-user" id="tb-user-wrap" onclick="openProfileMenu()" style="cursor:pointer;position:relative;">
+        <div class="tb-avatar" id="tb-avatar-el" style="overflow:hidden;">MC</div>
         <div>
-          <div class="tb-username">Migue CS</div>
-          <div class="tb-email">equipe@cs.com</div>
+          <div class="tb-username" id="tb-username-el">Migue CS</div>
+          <div class="tb-email" id="tb-email-el">equipe@cs.com</div>
         </div>
+      </div>
+      <!-- Profile Dropdown -->
+      <div id="profile-menu" style="display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:14px;z-index:500;min-width:220px;box-shadow:0 8px 32px #00000060;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1e2d45;">
+          <div id="pm-avatar" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#000;overflow:hidden;flex-shrink:0;"></div>
+          <div>
+            <div id="pm-name" style="font-size:14px;font-weight:700;color:#d8e8ff;"></div>
+            <div id="pm-role" style="font-size:11px;color:#4a6080;"></div>
+          </div>
+        </div>
+        <div id="pm-discord-section">
+          <div id="pm-discord-linked" style="display:none;background:#5865f215;border:1px solid #5865f240;border-radius:9px;padding:10px 12px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <img id="pm-discord-avatar" src="" style="width:28px;height:28px;border-radius:50%;border:2px solid #5865f2;" onerror="this.src=''">
+              <div>
+                <div style="font-size:11px;font-weight:700;color:#5865f2;">Discord Vinculado</div>
+                <div id="pm-discord-username" style="font-size:12px;color:#d8e8ff;font-weight:600;"></div>
+              </div>
+            </div>
+          </div>
+          <button id="pm-discord-btn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:8px;">
+            <span style="font-size:16px;">⚙</span> Vincular Discord
+          </button>
+        </div>
+        <button onclick="logoutUser()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>
       </div>
     </div>
   </div>
@@ -1126,26 +1151,88 @@ function LREG(){
   });
 }
 
+var _currentUser=null;
+var BOT_URL='https://bot-cs-p-s-venda-production.up.railway.app';
+
 function LINIT(usr){
+  _currentUser=usr;
   document.getElementById('LG').style.display='none';
-  var nm=document.querySelector('.tb-username');if(nm)nm.textContent=usr.usuario;
-  var av=document.querySelector('.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
-  var em=document.querySelector('.tb-email');if(em)em.textContent=usr.role;
-  // Add logout button
-  var tbr=document.querySelector('.topbar-r');
-  if(tbr&&!document.getElementById('_LB')){
-    var b=document.createElement('button');
-    b.id='_LB';b.textContent='⏻ Sair';
-    b.style.cssText='background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
-    b.onmouseover=function(){b.style.color='#f75454';};
-    b.onmouseout=function(){b.style.color='#4a6080';};
-    b.onclick=function(){sessionStorage.removeItem(SK);location.reload();};
-    tbr.appendChild(b);
-  }
+  var nm=document.getElementById('tb-username-el');if(nm)nm.textContent=usr.usuario;
+  var em=document.getElementById('tb-email-el');if(em)em.textContent=usr.role;
+  var pmn=document.getElementById('pm-name');if(pmn)pmn.textContent=usr.usuario;
+  var pmr=document.getElementById('pm-role');if(pmr)pmr.textContent=usr.role;
+  setAvatar(usr.usuario,null);
+  checkDiscordLinked(usr.usuario);
   if(usr.role==='Administrador'){
     var sb2=document.getElementById('sb-acessos');if(sb2)sb2.style.display='flex';
   }
+  checkOAuthReturn();
   if(typeof dashInit==='function')dashInit();
+  document.addEventListener('click',function(e){
+    var menu=document.getElementById('profile-menu');
+    var wrap=document.getElementById('tb-user-wrap');
+    if(menu&&wrap&&!menu.contains(e.target)&&!wrap.contains(e.target)){menu.style.display='none';}
+  });
+}
+
+function setAvatar(usuario,avatarUrl){
+  var av=document.getElementById('tb-avatar-el');
+  var pma=document.getElementById('pm-avatar');
+  if(avatarUrl){
+    if(av){av.innerHTML='<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';}
+    if(pma){pma.innerHTML='<img src="'+avatarUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">';}
+  } else {
+    var ini=usuario.substring(0,2).toUpperCase();
+    if(av){av.textContent=ini;}
+    if(pma){pma.textContent=ini;}
+  }
+}
+
+function openProfileMenu(){
+  var m=document.getElementById('profile-menu');
+  if(m)m.style.display=m.style.display==='none'?'block':'none';
+}
+
+function logoutUser(){sessionStorage.removeItem(SK);location.reload();}
+
+function vincularDiscord(){
+  if(!_currentUser)return;
+  window.location.href=BOT_URL+'/discord/login?usuario='+encodeURIComponent(_currentUser.usuario);
+}
+
+function checkDiscordLinked(usuario){
+  fetch(BOT_URL+'/discord/user/'+encodeURIComponent(usuario))
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){if(d&&d.discord_id)showDiscordLinked(d);})
+    .catch(function(){});
+}
+
+function showDiscordLinked(d){
+  var linked=document.getElementById('pm-discord-linked');
+  var btn=document.getElementById('pm-discord-btn');
+  var dav=document.getElementById('pm-discord-avatar');
+  var dun=document.getElementById('pm-discord-username');
+  if(linked)linked.style.display='block';
+  if(btn){btn.innerHTML='<span style="font-size:16px;">🔄</span> Reconectar Discord';}
+  if(dav&&d.discord_avatar)dav.src=d.discord_avatar;
+  if(dun)dun.textContent=d.discord_username||'';
+  if(d.discord_avatar)setAvatar(_currentUser?_currentUser.usuario:'',d.discord_avatar);
+}
+
+function checkOAuthReturn(){
+  var params=new URLSearchParams(window.location.search);
+  if(params.get('discord_ok')==='1'){
+    var avatar=decodeURIComponent(params.get('discord_avatar')||'');
+    var username=decodeURIComponent(params.get('discord_username')||'');
+    var id=params.get('discord_id')||'';
+    if(avatar)setAvatar(_currentUser?_currentUser.usuario:'',avatar);
+    showDiscordLinked({discord_id:id,discord_username:username,discord_avatar:avatar});
+    toast('✅ Discord vinculado com sucesso!');
+    window.history.replaceState({},'',window.location.pathname);
+  } else if(params.get('discord_error')){
+    toast('❌ Erro ao vincular Discord.');
+    window.history.replaceState({},'',window.location.pathname);
+  }
 }
 
 // ═══ ACESSOS PAGE ═══

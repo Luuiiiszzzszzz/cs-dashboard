@@ -234,6 +234,13 @@ select option{background:var(--s2);}
   </div>
 
   <!-- Time -->
+  <div class="sb-item" onclick="goPage('solicit-reg')" id="sb-solicit-reg" style="display:none">
+    <div class="sbi-left">
+      <span class="sbi-icon">📋</span>
+      <span>Solicitações</span>
+    </div>
+    <span class="sb-badge" id="badge-solicit" style="background:#f5c842;color:#000;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800">0</span>
+  </div>
   <div class="sb-item" onclick="toggleSB(this,'time')" id="sb-time">
     <div class="sbi-left">
       <span class="sbi-icon">👥</span>
@@ -301,13 +308,13 @@ select option{background:var(--s2);}
             <div id="pp-discord" style="font-size:13px;color:#d8e8ff;font-weight:600;font-family:monospace">—</div>
           </div>
         </div>
-        <button onclick="editProfile()" style="width:100%;padding:8px;border-radius:8px;background:#1e2d45;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #2a3d55;cursor:pointer;margin-bottom:6px">✏️ Editar meu perfil</button>
+        <button id="pp-edit-btn" onclick="editProfile()" style="width:100%;padding:8px;border-radius:8px;background:#1e2d45;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #2a3d55;cursor:pointer;margin-bottom:6px;display:none">✏️ Editar perfil do membro</button>
         <button onclick="sessionStorage.removeItem('_cs_s');location.reload()" style="width:100%;padding:8px;border-radius:8px;background:transparent;color:#f75454;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #f7545440;cursor:pointer">⏻ Sair</button>
       </div>
       <!-- Edit Profile Modal -->
       <div id="edit-profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center">
         <div style="background:#0f1420;border:1px solid #1e2d45;border-radius:18px;padding:28px 32px;width:380px;max-width:95vw">
-          <div style="font-size:16px;font-weight:800;color:#d8e8ff;margin-bottom:16px">✏️ Editar Perfil</div>
+          <div style="font-size:16px;font-weight:800;color:#d8e8ff;margin-bottom:10px">✏️ Editar Perfil do Membro</div><div style="font-size:11px;color:#4a6080;margin-bottom:16px">Somente o administrador pode definir cidade e Discord ID</div>
           <div style="margin-bottom:12px">
             <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px">Cidade que atende</label>
             <select id="ep-city" style="width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 13px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;outline:none">
@@ -419,6 +426,16 @@ select option{background:var(--s2);}
     </div>
 
     <!-- ═══ MEMBROS ═══ -->
+    <div class="page" id="page-solicit-reg">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">📋 Solicitações de Acesso</div>
+          <div class="page-sub">Usuários aguardando aprovação para entrar no sistema</div>
+        </div>
+      </div>
+      <div id="solicit-list" style="display:flex;flex-direction:column;gap:12px;margin-top:20px"></div>
+    </div>
+
     <div class="page" id="page-membros">
       <div class="page-hdr">
         <div>
@@ -613,6 +630,7 @@ function goPage(id){
   curPage=id;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-sub-item').forEach(i=>i.classList.remove('active'));
+  if(id==='solicit-reg')renderSolicitReg();
   const pg=document.getElementById('page-'+id);
   if(pg) pg.classList.add('active');
   const ssi=document.getElementById('ssi-'+id);
@@ -989,6 +1007,37 @@ function toast(msg){
   document.getElementById(id).addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(id); });
 });
 
+// ═══ SOLICIT REG PAGE ═══
+function renderSolicitReg(){
+  var list=document.getElementById('solicit-list');
+  if(!list)return;
+  var us=GU().filter(function(x){return x.pendente;});
+  var badge=document.getElementById('badge-solicit');
+  if(badge)badge.textContent=us.length||'0';
+  if(!us.length){
+    list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhuma solicitação pendente</div></div>';
+    return;
+  }
+  list.innerHTML=us.map(function(u){
+    return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
+      +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
+      +'<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--txt)">'+u.usuario+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">Aguardando aprovação de acesso</div></div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button onclick="aprovSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:linear-gradient(135deg,#22d187,#0fa868);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ Aprovar</button>'
+      +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
+      +'</div></div>';
+  }).join('');
+}
+function aprovSolicit(id){
+  var us=GU();var u=us.find(function(x){return x.id===id;});
+  if(u){delete u.pendente;SU(us);renderSolicitReg();}
+}
+function rejSolicit(id){
+  if(!confirm('Recusar este usuário?'))return;
+  SU(GU().filter(function(x){return x.id!==id;}));renderSolicitReg();
+}
+
 // ═══ INIT ═══ (called by login system after auth)
 function dashInit(){
   try{populateSelects();}catch(e){}
@@ -1149,10 +1198,13 @@ function LINIT(usr){
   if(usr.role==='Administrador'){
     var navSolicit=document.getElementById('nav-solicit-reg');
     if(navSolicit)navSolicit.style.display='flex';
-    // Update badge
     var pend=GU().filter(function(x){return x.pendente;}).length;
     var badge=document.getElementById('badge-solicit');
-    if(badge)badge.textContent=pend;
+    if(badge)badge.textContent=pend||'0';
+    var sbSolicit=document.getElementById('sb-solicit-reg');
+    if(sbSolicit)sbSolicit.style.display='flex';
+    var editBtn=document.getElementById('pp-edit-btn');
+    if(editBtn)editBtn.style.display='block';
   }
 }
 

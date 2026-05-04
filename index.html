@@ -570,26 +570,6 @@ let MEMBROS = [];
 const MEMBER_COLORS = ['#f59e0b','#06b6d4','#ec4899','#a78bfa','#34d399','#00c6ff','#f75454','#a855f7','#22d187','#0077ff'];
 const MEMBER_EMOJIS = ['🌻','🌊','🌸','💜','🌿','⚡','🔥','🌙','🎯','💎'];
 
-function loadMembros(cb){
-  sb('GET','cs_usuarios','select=*&role=neq.Administrador&aprovado=eq.true&order=usuario.asc',null,function(err,users){
-    users=users||[];
-    MEMBROS=users.map(function(u,i){
-      return {
-        id: String(u.id||u.usuario),
-        name: u.usuario,
-        emoji: MEMBER_EMOJIS[i%MEMBER_EMOJIS.length],
-        color: MEMBER_COLORS[i%MEMBER_COLORS.length],
-        cargo: u.role||'CS Pós-Vendas',
-        acesso: u.aprovado!==false,
-        discord_avatar: u.discord_avatar||null,
-        discord_username: u.discord_username||null,
-        _raw: u
-      };
-    });
-    if(cb)cb();
-  });
-}
-
 function saveM(){ /* agora usa Supabase */ }
 
 // ═══ PROJETOS (Supabase) ═══
@@ -718,7 +698,7 @@ function populateSelects(){
 }
 
 function loadUsuariosParaSelect(){
-  sb('GET','cs_usuarios','select=usuario,role&aprovado=eq.true&order=usuario.asc',null,function(err,users){
+  sbp('GET','cs_usuarios','select=usuario,role&aprovado=eq.true&order=usuario.asc',null,function(err,users){
     var fv=document.getElementById('f-vend');
     if(!fv)return;
     users=users||[];
@@ -883,7 +863,7 @@ function rMembros(){
 function toggleAccess(id, val){
   var m=MEMBROS.find(x=>x.id===id);
   if(!m)return;
-  sb('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{aprovado:val},function(err){
+  sbp('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{aprovado:val},function(err){
     if(!err){m.acesso=val;rMembros();toast(val?'✅ Acesso ativado':'🔒 Acesso removido');}
     else toast('❌ Erro ao atualizar acesso');
   });
@@ -892,7 +872,7 @@ function removeMember(id){
   if(!confirm('Remover este membro da equipe? O usuário perderá o acesso.')) return;
   var m=MEMBROS.find(x=>x.id===id);
   if(!m)return;
-  sb('DELETE','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),null,function(err){
+  sbp('DELETE','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),null,function(err){
     if(err){toast('❌ Erro ao remover membro');return;}
     MEMBROS=MEMBROS.filter(x=>x.id!==id);
     populateSelects();
@@ -1200,6 +1180,26 @@ function dashInit(){
 // ═══ SUPABASE CONFIG ═══
 var SBU='https://lomtwfoccesaejcywail.supabase.co';
 var SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
+
+function loadMembros(cb){
+  sbp('GET','cs_usuarios','select=*&role=neq.Administrador&aprovado=eq.true&order=usuario.asc',null,function(err,users){
+    users=users||[];
+    MEMBROS=users.map(function(u,i){
+      return {
+        id: String(u.id||u.usuario),
+        name: u.usuario,
+        emoji: MEMBER_EMOJIS[i%MEMBER_EMOJIS.length],
+        color: MEMBER_COLORS[i%MEMBER_COLORS.length],
+        cargo: u.role||'CS Pós-Vendas',
+        acesso: u.aprovado!==false,
+        discord_avatar: u.discord_avatar||null,
+        discord_username: u.discord_username||null,
+        _raw: u
+      };
+    });
+    if(cb)cb();
+  });
+}
 
 function sb(method,table,params,body,cb){
   var url=SBU+'/rest/v1/'+table+(params?'?'+params:'');

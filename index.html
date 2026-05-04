@@ -566,6 +566,23 @@ select option{background:var(--s2);}
 <div class="toast" id="toast"></div>
 
 <script>
+
+// ── Supabase helper (XHR, no SDK) ──
+var _SBU='https://lomtwfoccessejcywail.supabase.co',_SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
+function sbReq(method,path,body,cb){
+  var x=new XMLHttpRequest();
+  x.open(method,_SBU+'/rest/v1/'+path,true);
+  x.setRequestHeader('apikey',_SBK);
+  x.setRequestHeader('Authorization','Bearer '+_SBK);
+  x.setRequestHeader('Content-Type','application/json');
+  x.setRequestHeader('Prefer','return=representation');
+  x.onload=function(){
+    try{cb(null,JSON.parse(x.responseText));}
+    catch(e){cb(null,[]);}
+  };
+  x.onerror=function(){cb(new Error('network'));if(cb)cb(new Error('network'),[]);};
+  x.send(body?JSON.stringify(body):null);
+}
 var UK='_cs_u',SK='_cs_s';
 function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
 function SU(u){localStorage.setItem(UK,JSON.stringify(u));}
@@ -1016,13 +1033,21 @@ function toast(msg){
 function renderSolicitReg(){
   var list=document.getElementById('solicit-list');
   if(!list)return;
-  var us=GU().filter(function(x){return x.pendente;});
-  var badge=document.getElementById('badge-solicit');
-  if(badge)badge.textContent=us.length||'0';
-  if(!us.length){
-    list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhuma registro pendente</div></div>';
-    return;
-  }
+  list.innerHTML='<div style="color:#4a6080;font-size:13px;padding:20px;text-align:center">Carregando...</div>';
+  // Load from Supabase
+  sbReq('GET','cs_usuarios?select=*&aprovado=eq.false',null,function(err,data){
+    var us=data||[];
+    // Also merge local pending ones
+    var local=GU().filter(function(x){return x.pendente;});
+    local.forEach(function(l){
+      if(!us.find(function(s){return s.usuario===l.usuario;}))us.push(l);
+    });
+    var badge=document.getElementById('badge-solicit');
+    if(badge)badge.textContent=us.length||'0';
+    if(!us.length){
+      list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhum registro pendente</div></div>';
+      return;
+    }
   list.innerHTML=us.map(function(u){
     return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
       +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
@@ -1033,14 +1058,25 @@ function renderSolicitReg(){
       +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
       +'</div></div>';
   }).join('');
+  }); // end sbReq
 }
 function aprovSolicit(id){
+  // Update in Supabase
+  sbReq('PATCH','cs_usuarios?id=eq.'+id,{aprovado:true},function(){
+    // Also update local
+    var us=GU();var u=us.find(function(x){return x.id===id;});
+    if(u){delete u.pendente;SU(us);}
+    renderSolicitReg();
+  });
+  // Also approve locally stored one
   var us=GU();var u=us.find(function(x){return x.id===id;});
-  if(u){delete u.pendente;SU(us);renderSolicitReg();}
+  if(u){delete u.pendente;SU(us);}
 }
 function rejSolicit(id){
   if(!confirm('Recusar este usuário?'))return;
-  SU(GU().filter(function(x){return x.id!==id;}));renderSolicitReg();
+  sbReq('DELETE','cs_usuarios?id=eq.'+id,null,function(){renderSolicitReg();});
+  SU(GU().filter(function(x){return x.id!==id;}));
+  renderSolicitReg();
 }
 
 // ═══ INIT ═══ (called by login system after auth)
@@ -1167,10 +1203,14 @@ function LREG(){
   if(p.length<4){LM('LMR','Senha muito curta (mín. 4).','ERR');return;}
   var us=GU();
   if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe.','ERR');return;}
+  // Save locally AND to Supabase
   us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS',pendente:true});
   SU(us);
-  LM('LMR','✅ Registro enviado! Aguarde o admin aprovar seu acesso no painel de Registros.','OK');
-  // Auto switch to login tab after 3 seconds
+  // Also save to Supabase so admin sees it from any device
+  sbReq('POST','cs_usuarios',{usuario:u,senha:p,role:'Equipe CS',aprovado:false},function(err){
+    if(err)console.log('Supabase save failed, local only:', err);
+  });
+  LM('LMR','✅ Registro enviado! Aguarde o admin aprovar seu acesso.','OK');
   setTimeout(function(){LSW('in');},3000);
   ['LRU','LRP','LRP2'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});
 }

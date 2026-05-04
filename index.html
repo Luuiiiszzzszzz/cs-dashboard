@@ -344,7 +344,7 @@ select option{background:var(--s2);}
     <div class="page active" id="page-solicitacoes">
       <div class="page-hdr">
         <div>
-          <div class="page-title">📋 Registros</div>
+          <div class="page-title">🎟️ Registros</div>
           <div class="page-sub">Todos os projetos registrados pela Equipe CS</div>
         </div>
         <div class="hdr-right">
@@ -429,8 +429,8 @@ select option{background:var(--s2);}
     <div class="page" id="page-solicit-reg">
       <div class="page-hdr">
         <div>
-          <div class="page-title">📋 Registros</div>
-          <div class="page-sub">Usuários aguardando aprovação para entrar no sistema</div>
+          <div class="page-title">🎟️ Registros</div>
+          <div class="page-sub">Gerencie códigos de convite e membros cadastrados</div>
         </div>
       </div>
       <div id="solicit-list" style="display:flex;flex-direction:column;gap:12px;margin-top:20px"></div>
@@ -567,21 +567,22 @@ select option{background:var(--s2);}
 
 <script>
 
-// ── Supabase helper (XHR, no SDK) ──
+// ── Supabase helper (fetch with proper CORS) ──
 var _SBU='https://lomtwfoccessejcywail.supabase.co',_SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
 function sbReq(method,path,body,cb){
-  var x=new XMLHttpRequest();
-  x.open(method,_SBU+'/rest/v1/'+path,true);
-  x.setRequestHeader('apikey',_SBK);
-  x.setRequestHeader('Authorization','Bearer '+_SBK);
-  x.setRequestHeader('Content-Type','application/json');
-  x.setRequestHeader('Prefer','return=representation');
-  x.onload=function(){
-    try{cb(null,JSON.parse(x.responseText));}
-    catch(e){cb(null,[]);}
-  };
-  x.onerror=function(){cb(new Error('network'));if(cb)cb(new Error('network'),[]);};
-  x.send(body?JSON.stringify(body):null);
+  fetch(_SBU+'/rest/v1/'+path,{
+    method:method,
+    headers:{
+      'apikey':_SBK,
+      'Authorization':'Bearer '+_SBK,
+      'Content-Type':'application/json',
+      'Prefer':'return=representation'
+    },
+    body:body?JSON.stringify(body):undefined
+  })
+  .then(function(r){return r.text();})
+  .then(function(t){try{cb(null,JSON.parse(t));}catch(e){cb(null,[]);}})
+  .catch(function(e){console.error('sbReq error:',e);if(cb)cb(e,[]);});
 }
 var UK='_cs_u',SK='_cs_s';
 function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
@@ -1033,21 +1034,61 @@ function toast(msg){
 function renderSolicitReg(){
   var list=document.getElementById('solicit-list');
   if(!list)return;
-  list.innerHTML='<div style="color:#4a6080;font-size:13px;padding:20px;text-align:center">Carregando...</div>';
-  // Load from Supabase
-  sbReq('GET','cs_usuarios?select=*&aprovado=eq.false',null,function(err,data){
-    var us=data||[];
-    // Also merge local pending ones
-    var local=GU().filter(function(x){return x.pendente;});
-    local.forEach(function(l){
-      if(!us.find(function(s){return s.usuario===l.usuario;}))us.push(l);
+  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
+  var users=GU().filter(function(u){return u.role!=='Administrador';});
+  var badge=document.getElementById('badge-solicit');
+  if(badge)badge.textContent=codes.filter(function(c){return !c.used;}).length||'0';
+  var html='';
+  // Section: Generate new code
+  html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
+  html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:4px">🎟️ Gerar Código de Convite</div>';
+  html+='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Gere um código e envie pelo Discord para a pessoa entrar.</div>';
+  html+='<button onclick="gerarCodigo()" style="padding:10px 20px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">＋ Gerar Novo Código</button>';
+  html+='<div id="novo-codigo" style="margin-top:14px"></div>';
+  html+='</div>';
+  // Section: Active codes
+  var ativos=codes.filter(function(c){return !c.used;});
+  if(ativos.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">⏳ Códigos Ativos ('+ativos.length+')</div>';
+    ativos.forEach(function(c){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
+      html+='<div style="flex:1;font-family:monospace;font-size:15px;font-weight:800;color:#00c6ff;letter-spacing:2px">'+c.code+'</div>';
+      html+='<div style="font-size:10px;color:var(--muted)">Criado: '+new Date(c.created).toLocaleDateString('pt-BR')+'</div>';
+      html+='<button onclick="copiarCodigo(''+c.code+'')" style="padding:5px 12px;border-radius:7px;background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copiar</button>';
+      html+='<button onclick="deletarCodigo(''+c.code+'')" style="padding:5px 10px;border-radius:7px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:11px;cursor:pointer">✕</button>';
+      html+='</div>';
     });
-    var badge=document.getElementById('badge-solicit');
-    if(badge)badge.textContent=us.length||'0';
-    if(!us.length){
-      list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600;color:var(--txt)">Nenhum registro pendente</div></div>';
-      return;
-    }
+    html+='</div>';
+  }
+  // Section: Used codes
+  var usados=codes.filter(function(c){return c.used;});
+  if(usados.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">✅ Códigos Utilizados ('+usados.length+')</div>';
+    usados.forEach(function(c){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
+      html+='<div style="flex:1;font-family:monospace;font-size:13px;color:#4a6080;text-decoration:line-through">'+c.code+'</div>';
+      html+='<div style="font-size:11px;color:#22d187;font-weight:600">Usado por: '+c.usedBy+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  // Section: Users
+  if(users.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">👥 Membros cadastrados ('+users.length+')</div>';
+    users.forEach(function(u){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
+      html+='<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000">'+u.usuario.substring(0,2).toUpperCase()+'</div>';
+      html+='<div style="flex:1;font-size:13px;font-weight:600;color:var(--txt)">'+u.usuario+'</div>';
+      html+='<div style="font-size:11px;color:var(--muted)">'+u.role+'</div>';
+      html+='<button onclick="ADEL('+u.id+')" style="padding:4px 10px;border-radius:6px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif">✕ Remover</button>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  list.innerHTML=html;
   list.innerHTML=us.map(function(u){
     return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
       +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
@@ -1058,24 +1099,33 @@ function renderSolicitReg(){
       +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
       +'</div></div>';
   }).join('');
-  }); // end sbReq
 }
-function aprovSolicit(id){
-  // Update in Supabase
-  sbReq('PATCH','cs_usuarios?id=eq.'+id,{aprovado:true},function(){
-    // Also update local
-    var us=GU();var u=us.find(function(x){return x.id===id;});
-    if(u){delete u.pendente;SU(us);}
-    renderSolicitReg();
+function gerarCodigo(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var code='';
+  for(var i=0;i<8;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
+  codes.push({code:code,created:Date.now(),used:false,usedBy:null});
+  localStorage.setItem('_cs_codes',JSON.stringify(codes));
+  var div=document.getElementById('novo-codigo');
+  if(div){
+    div.innerHTML='<div style="background:#00c6ff15;border:1px solid #00c6ff40;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px">'
+      +'<div style="font-family:monospace;font-size:22px;font-weight:900;color:#00c6ff;letter-spacing:3px">'+code+'</div>'
+      +'<button onclick="copiarCodigo(''+code+'')" style="padding:7px 14px;border-radius:7px;background:#00c6ff;color:#000;border:none;font-family:Outfit,sans-serif;font-size:12px;font-weight:800;cursor:pointer">📋 Copiar</button>'
+      +'</div>';
+  }
+  renderSolicitReg();
+}
+function copiarCodigo(code){
+  navigator.clipboard.writeText(code).then(function(){
+    alert('Código copiado: '+code+'
+Envie pelo Discord!');
   });
-  // Also approve locally stored one
-  var us=GU();var u=us.find(function(x){return x.id===id;});
-  if(u){delete u.pendente;SU(us);}
 }
-function rejSolicit(id){
-  if(!confirm('Recusar este usuário?'))return;
-  sbReq('DELETE','cs_usuarios?id=eq.'+id,null,function(){renderSolicitReg();});
-  SU(GU().filter(function(x){return x.id!==id;}));
+function deletarCodigo(code){
+  if(!confirm('Deletar código '+code+'?'))return;
+  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
+  localStorage.setItem('_cs_codes',JSON.stringify(codes.filter(function(c){return c.code!==code;})));
   renderSolicitReg();
 }
 
@@ -1130,7 +1180,7 @@ function dashInit(){
   <div class="LS">Acesse o painel da equipe</div>
   <div class="LTABS">
    <button class="LTB LON" id="LT1" onclick="LSW('in')">Entrar</button>
-   <button class="LTB LOFF" id="LT2" onclick="LSW('rg')">Solicitar Acesso</button>
+   <button class="LTB LOFF" id="LT2" onclick="LSW('rg')">Tenho um Código</button>
   </div>
   <div id="LPI">
    <div class="LFD"><label class="LLB">Usuário</label><input class="LIN" id="LU" placeholder="Seu usuário" autocomplete="username"></div>
@@ -1142,15 +1192,15 @@ function dashInit(){
    <div class="LMG" id="LMI"></div>
   </div>
   <div id="LPR" style="display:none">
-   <div class="LFD"><label class="LLB">Usuário desejado</label><input class="LIN" id="LRU" placeholder="Ex: mel, migue..."></div>
-   <div class="LFD"><label class="LLB">Senha</label>
-    <div class="LPW"><input class="LIN E" type="password" id="LRP" placeholder="Crie uma senha">
+   <div class="LFD"><label class="LLB">Código de Convite</label><input class="LIN" id="LRC" placeholder="Cole o código aqui..."></div>
+   <div class="LFD"><label class="LLB">Escolha seu Usuário</label><input class="LIN" id="LRU" placeholder="Ex: mel, migue..."></div>
+   <div class="LFD"><label class="LLB">Crie sua Senha</label>
+    <div class="LPW"><input class="LIN E" type="password" id="LRP" placeholder="Mínimo 4 caracteres">
     <button class="LEYE" type="button" onclick="var e=document.getElementById('LRP');e.type=e.type=='password'?'text':'password';this.textContent=e.type=='password'?'👁️':'🙈'">👁️</button></div>
    </div>
-   <div class="LFD"><label class="LLB">Confirmar Senha</label><input class="LIN" type="password" id="LRP2" placeholder="Repita a senha"></div>
-   <button class="LBT" onclick="LREG()">Solicitar Acesso</button>
+   <button class="LBT" onclick="LREG()">Entrar com Código</button>
    <div class="LMG" id="LMR"></div>
-   <div class="LHT">O administrador aprovará seu acesso.<br>Entre em contato pelo Discord.</div>
+   <div class="LHT">Peça um código de convite ao administrador pelo Discord.</div>
   </div>
  </div>
 </div>
@@ -1195,24 +1245,28 @@ function LLOG(){
 }
 
 function LREG(){
+  var code=document.getElementById('LRC').value.trim().toUpperCase();
   var u=document.getElementById('LRU').value.trim().toLowerCase();
   var p=document.getElementById('LRP').value;
-  var p2=document.getElementById('LRP2').value;
+  if(!code){LM('LMR','Digite o código de convite.','ERR');return;}
   if(!u||!p){LM('LMR','Preencha todos os campos.','ERR');return;}
-  if(p!==p2){LM('LMR','As senhas não coincidem.','ERR');return;}
   if(p.length<4){LM('LMR','Senha muito curta (mín. 4).','ERR');return;}
+  // Validate code
+  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
+  var validCode=codes.find(function(c){return c.code===code&&!c.used;});
+  if(!validCode){LM('LMR','Código inválido ou já utilizado.','ERR');return;}
   var us=GU();
-  if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe.','ERR');return;}
-  // Save locally AND to Supabase
-  us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS',pendente:true});
+  if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe. Escolha outro nome.','ERR');return;}
+  // Mark code as used
+  validCode.used=true;
+  validCode.usedBy=u;
+  localStorage.setItem('_cs_codes',JSON.stringify(codes));
+  // Create user
+  us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS'});
   SU(us);
-  // Also save to Supabase so admin sees it from any device
-  sbReq('POST','cs_usuarios',{usuario:u,senha:p,role:'Equipe CS',aprovado:false},function(err){
-    if(err)console.log('Supabase save failed, local only:', err);
-  });
-  LM('LMR','✅ Registro enviado! Aguarde o admin aprovar seu acesso.','OK');
-  setTimeout(function(){LSW('in');},3000);
-  ['LRU','LRP','LRP2'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});
+  LM('LMR','✅ Conta criada! Clique em Entrar e faça login.','OK');
+  setTimeout(function(){LSW('in');document.getElementById('LU').value=u;},2000);
+  ['LRC','LRU','LRP'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});
 }
 
 function LINIT(usr){

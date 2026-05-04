@@ -1029,9 +1029,29 @@ var SSK='_cs_s';
 var ADV='pend';
 
 function SBF(path,method,body){
-  var opts={method:method||'GET',headers:{'apikey':SBK,'Authorization':'Bearer '+SBK,'Content-Type':'application/json','Prefer':'return=representation'}};
-  if(body)opts.body=JSON.stringify(body);
-  return fetch(SBU+'/rest/v1/'+path,opts).then(function(r){return r.json();}).catch(function(e){console.error(e);throw e;});
+  return new Promise(function(resolve,reject){
+    var x=new XMLHttpRequest();
+    x.open(method||'GET', SBU+'/rest/v1/'+path, true);
+    x.setRequestHeader('apikey', SBK);
+    x.setRequestHeader('Authorization', 'Bearer '+SBK);
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.setRequestHeader('Prefer', 'return=representation');
+    x.withCredentials = false;
+    x.onreadystatechange = function(){
+      if(x.readyState===4){
+        if(x.status>=200&&x.status<300){
+          try{resolve(JSON.parse(x.responseText));}
+          catch(e){resolve([]);}
+        } else {
+          reject(new Error('HTTP '+x.status+': '+x.responseText));
+        }
+      }
+    };
+    x.onerror=function(){reject(new Error('Erro de rede - verifique conexão'));};
+    x.ontimeout=function(){reject(new Error('Timeout'));};
+    x.timeout=10000;
+    x.send(body?JSON.stringify(body):null);
+  });
 }
 
 function LSW(t){

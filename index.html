@@ -275,11 +275,57 @@ select option{background:var(--s2);}
     </div>
     <div class="topbar-right">
       <div class="tb-notif">🔔</div>
-      <div class="tb-user">
-        <div class="tb-avatar">MC</div>
+      <div class="tb-user" id="tb-user-btn" onclick="toggleProfile()" style="position:relative;cursor:pointer;">
+        <div class="tb-avatar" id="tb-av-el">MC</div>
         <div>
-          <div class="tb-username">Migue CS</div>
-          <div class="tb-email">equipe@cs.com</div>
+          <div class="tb-username tb-nm" id="tb-nm-el">Migue CS</div>
+          <div class="tb-email tb-em" id="tb-em-el">equipe@cs.com</div>
+        </div>
+      </div>
+      <!-- Profile Popup -->
+      <div id="profile-popup" style="display:none;position:absolute;top:60px;right:24px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:20px;width:280px;z-index:9000;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #1e2d45">
+          <div id="pp-av" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">MC</div>
+          <div>
+            <div id="pp-nm" style="font-size:15px;font-weight:800;color:#d8e8ff">Admin</div>
+            <div id="pp-role" style="font-size:11px;color:#4a6080">Equipe CS</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px">Cidade que atende</div>
+            <div id="pp-city" style="font-size:13px;color:#d8e8ff;font-weight:600">—</div>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px">Discord ID</div>
+            <div id="pp-discord" style="font-size:13px;color:#d8e8ff;font-weight:600;font-family:monospace">—</div>
+          </div>
+        </div>
+        <button onclick="editProfile()" style="width:100%;padding:8px;border-radius:8px;background:#1e2d45;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #2a3d55;cursor:pointer;margin-bottom:6px">✏️ Editar meu perfil</button>
+        <button onclick="sessionStorage.removeItem('_cs_s');location.reload()" style="width:100%;padding:8px;border-radius:8px;background:transparent;color:#f75454;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #f7545440;cursor:pointer">⏻ Sair</button>
+      </div>
+      <!-- Edit Profile Modal -->
+      <div id="edit-profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:#0f1420;border:1px solid #1e2d45;border-radius:18px;padding:28px 32px;width:380px;max-width:95vw">
+          <div style="font-size:16px;font-weight:800;color:#d8e8ff;margin-bottom:16px">✏️ Editar Perfil</div>
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px">Cidade que atende</label>
+            <select id="ep-city" style="width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 13px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;outline:none">
+              <option value="">Selecione...</option>
+              <option>Nobre</option><option>Santa</option><option>GrandeRP</option><option>MaltaRP</option>
+              <option>Real RP</option><option>KNG</option><option>Royal</option><option>District99</option>
+              <option>PrimeRP</option><option>Boomerang</option><option>GoatRP</option><option>Maresia</option>
+              <option>Fronteira</option><option>Universo</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px">Discord ID</label>
+            <input id="ep-discord" placeholder="Ex: 123456789012345678" style="width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 13px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;outline:none;box-sizing:border-box">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveProfile()" style="flex:1;padding:10px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">Salvar</button>
+            <button onclick="document.getElementById('edit-profile-modal').style.display='none'" style="flex:1;padding:10px;border-radius:9px;background:transparent;color:#4a6080;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #1e2d45;cursor:pointer">Cancelar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -665,6 +711,40 @@ function getFilters(k){
 }
 
 // ═══ RENDER PAGES ═══
+function renderSolicitReg(){
+  var list=document.getElementById('solicit-list');
+  var us=GU().filter(function(x){return x.pendente;});
+  var badge=document.getElementById('badge-solicit');
+  if(badge)badge.textContent=us.length;
+  if(!us.length){
+    list.innerHTML='<div style="text-align:center;padding:48px;color:#4a6080"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600">Nenhuma solicitação pendente</div></div>';
+    return;
+  }
+  list.innerHTML=us.map(function(u){
+    return '<div style="background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px">'
+      +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
+      +'<div style="flex:1">'
+      +'<div style="font-size:15px;font-weight:700;color:#d8e8ff;margin-bottom:2px">'+u.usuario+'</div>'
+      +'<div style="font-size:12px;color:#4a6080">Equipe CS · Aguardando aprovação</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+      +'<button onclick="aprovSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:linear-gradient(135deg,#22d187,#0fa868);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ Aprovar</button>'
+      +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function aprovSolicit(id){
+  var us=GU();var u=us.find(function(x){return x.id===id;});
+  if(u){delete u.pendente;SU(us);renderSolicitReg();}
+}
+function rejSolicit(id){
+  if(!confirm('Recusar e remover este usuário?'))return;
+  SU(GU().filter(function(x){return x.id!==id;}));
+  renderSolicitReg();
+}
+
 function rdr(id){
   updBadges();
   if(id==='solicitacoes') rSol();
@@ -1041,9 +1121,16 @@ function LREG(){
 
 function LINIT(usr){
   document.getElementById('LG').style.display='none';
-  var nm=document.querySelector('.tb-nm');if(nm)nm.textContent=usr.usuario;
-  var av=document.querySelector('.tb-av');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
-  var em=document.querySelector('.tb-em');if(em)em.textContent=usr.role;
+  var nm=document.getElementById('tb-nm-el');if(nm)nm.textContent=usr.usuario;
+  var av=document.getElementById('tb-av-el');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
+  var em=document.getElementById('tb-em-el');if(em)em.textContent=usr.role;
+  // Load profile data
+  var prof=JSON.parse(localStorage.getItem('_cs_prof_'+usr.usuario)||'{}');
+  document.getElementById('pp-nm').textContent=usr.usuario;
+  document.getElementById('pp-av').textContent=usr.usuario.substring(0,2).toUpperCase();
+  document.getElementById('pp-role').textContent=usr.role;
+  document.getElementById('pp-city').textContent=prof.city||'Não definida';
+  document.getElementById('pp-discord').textContent=prof.discord||'Não definido';
   var tb=document.querySelector('.topbar-r,.tb-r');
   if(tb&&usr.role==='Administrador'&&!document.getElementById('_AB')){
     var b=document.createElement('button');b.id='_AB';b.textContent='⚙️ Acessos';
@@ -1058,6 +1145,15 @@ function LINIT(usr){
     tb.appendChild(b2);
   }
   if(typeof dashInit==='function')dashInit();
+  // Show solicit nav for admin
+  if(usr.role==='Administrador'){
+    var navSolicit=document.getElementById('nav-solicit-reg');
+    if(navSolicit)navSolicit.style.display='flex';
+    // Update badge
+    var pend=GU().filter(function(x){return x.pendente;}).length;
+    var badge=document.getElementById('badge-solicit');
+    if(badge)badge.textContent=pend;
+  }
 }
 
 function ADLOAD(){
@@ -1093,6 +1189,36 @@ document.addEventListener('keydown',function(e){
 var s=GS();
 if(s&&!s.pendente){LINIT(s);}
 else{document.getElementById('LG').style.display='flex';}
+
+function toggleProfile(){
+  var p=document.getElementById('profile-popup');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  var btn=document.getElementById('tb-user-btn');
+  var popup=document.getElementById('profile-popup');
+  if(popup&&btn&&!btn.contains(e.target)&&!popup.contains(e.target)){
+    popup.style.display='none';
+  }
+});
+function editProfile(){
+  document.getElementById('profile-popup').style.display='none';
+  var s=JSON.parse(sessionStorage.getItem('_cs_s')||'{}');
+  var prof=JSON.parse(localStorage.getItem('_cs_prof_'+s.usuario)||'{}');
+  document.getElementById('ep-city').value=prof.city||'';
+  document.getElementById('ep-discord').value=prof.discord||'';
+  document.getElementById('edit-profile-modal').style.display='flex';
+}
+function saveProfile(){
+  var s=JSON.parse(sessionStorage.getItem('_cs_s')||'{}');
+  var city=document.getElementById('ep-city').value;
+  var discord=document.getElementById('ep-discord').value.trim();
+  localStorage.setItem('_cs_prof_'+s.usuario,JSON.stringify({city:city,discord:discord}));
+  document.getElementById('pp-city').textContent=city||'Não definida';
+  document.getElementById('pp-discord').textContent=discord||'Não definido';
+  document.getElementById('edit-profile-modal').style.display='none';
+}
+
 </script>
 
 </body>

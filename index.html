@@ -1155,7 +1155,7 @@ function LINIT(usr){
       +'<div style="font-size:11px;color:#4a6080;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1e2d45">'+usr.role+'</div>'
       +'<div id="_pmDiscord" style="margin-bottom:10px"></div>'
       +'<button id="_pmDBtn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;">🎮 Vincular Discord</button>'
-      +'<button onclick="sessionStorage.removeItem(''+SK+'');location.reload()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>';
+      +'<button onclick="sessionStorage.clear();location.reload()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>';
     document.body.appendChild(menu);
     // Abrir/fechar ao clicar no avatar
     document.querySelector('.tb-user').style.cursor='pointer';

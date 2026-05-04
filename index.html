@@ -557,11 +557,11 @@ function loadP(cb){
     P=(d||[]).map(function(p){
       return {
         id: p.id,
-        nome: p.Nome||p.nome||'',
-        cidade: p.Cidade||p.cidade||'',
-        discord: p.Discord||p.discord||'',
+        nome: p.nome||p.Nome||'',
+        cidade: p.cidade||p.Cidade||'',
+        discord: p.discord||p.Discord||'',
         itens: p.itens||'',
-        valor: p.Valor||p.valor||0,
+        valor: parseFloat(p.valor||p.Valor||0)||0,
         vendedor: p.vendedor||'',
         status: p.status||'pending',
         date: p.date||p.created_at||new Date().toISOString()
@@ -936,7 +936,7 @@ function addProj(){
   const vendedor=document.getElementById('f-vend').value.trim();
   const itens=document.getElementById('f-itens').value.trim();
   if(!nome||!cidade||!vendedor){ alert('Preencha Nome, Cidade e Membro CS.'); return; }
-  const proj={Nome:nome,Cidade:cidade,Discord:discord,itens,Valor:valor,vendedor,status:'pending',date:new Date().toISOString()};
+  const proj={nome:nome,cidade:cidade,discord:discord,itens:itens,valor:valor,vendedor:vendedor,status:'pending',date:new Date().toISOString()};
   sbp('POST','projetos','',proj,function(err,d){
     if(err||!d||!d.length){alert('Erro ao salvar projeto.');return;}
     P.unshift(d[0]);

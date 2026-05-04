@@ -971,13 +971,19 @@ function toast(msg){
 // ═══ INIT ═══
 var _currentUser=null;
 function dashInit(){
-  buildCidadeChips();
-  sbp('GET','cs_usuarios','select=usuario,role,discord_avatar,discord_username&aprovado=eq.true&order=usuario.asc',null,function(err,users){
-    MEMBROS=(users||[]).map(function(u,i){
-      return {id:u.usuario,name:u.usuario,emoji:MBR_EMOJIS[i%MBR_EMOJIS.length],color:MBR_COLORS[i%MBR_COLORS.length],cargo:u.role||'CS Pós-Vendas',acesso:true,discord_avatar:u.discord_avatar||null,discord_username:u.discord_username||null};
+  try{buildCidadeChips();}catch(e){}
+  try{populateSelects();}catch(e){}
+  loadP(function(){
+    try{rdr('solicitacoes');}catch(e){}
+    // Carrega membros em background sem bloquear
+    sbp('GET','cs_usuarios','select=usuario,role,discord_avatar,discord_username&aprovado=eq.true&order=usuario.asc',null,function(err,users){
+      if(!err&&users&&users.length){
+        MEMBROS=(users||[]).filter(function(u){return u.role!=='Administrador';}).map(function(u,i){
+          return {id:u.usuario,name:u.usuario,emoji:MBR_EMOJIS[i%MBR_EMOJIS.length],color:MBR_COLORS[i%MBR_COLORS.length],cargo:u.role||'CS Pós-Vendas',acesso:true,discord_avatar:u.discord_avatar||null,discord_username:u.discord_username||null};
+        });
+        try{populateSelects();}catch(e){}
+      }
     });
-    populateSelects();
-    loadP(function(){rdr('solicitacoes');});
   });
 }
 

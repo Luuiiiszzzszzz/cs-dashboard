@@ -233,10 +233,7 @@ select option{background:var(--s2);}
 
   <!-- Time -->
   <div class="sb-item" onclick="goPage('acessos')" id="sb-acessos" style="display:none">
-    <div class="sbi-left">
-      <span class="sbi-icon">🎟️</span>
-      <span>Acessos</span>
-    </div>
+    <div class="sbi-left"><span class="sbi-icon">🎟️</span><span>Acessos</span></div>
     <span id="badge-acessos" style="background:#f5c842;color:#000;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;display:none">0</span>
   </div>
   <div class="sb-item" onclick="toggleSB(this,'time')" id="sb-time">
@@ -382,12 +379,11 @@ select option{background:var(--s2);}
       <div class="page-hdr">
         <div>
           <div class="page-title">🎟️ Acessos</div>
-          <div class="page-sub">Gere códigos de convite e gerencie membros da equipe</div>
+          <div class="page-sub">Códigos de convite e membros da equipe</div>
         </div>
       </div>
       <div id="acessos-content" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
     </div>
-
     <div class="page" id="page-membros">
       <div class="page-hdr">
         <div>
@@ -531,15 +527,53 @@ let MEMBROS = JSON.parse(localStorage.getItem('cs_membros')||'null') || [
   {id:'juniola',name:'Juniola', emoji:'🌿',color:'#34d399',cargo:'CS Pós-Vendas',acesso:true},
 ];
 
-// ═══ PROJETOS ═══
-let P = JSON.parse(localStorage.getItem('cs_proj')||'null') || [];
+// ═══ PROJETOS (Supabase) ═══
+let P = [];
 
 let curPage = 'solicitacoes';
 let finTab  = 'todos';
-let rfCidade = ''; // filtro cidade no relatório
+let rfCidade = '';
 let chartCid = null, chartMem = null, chartVal = null;
 
-function saveP(){ localStorage.setItem('cs_proj', JSON.stringify(P)); }
+const _SBU='https://lomtwfoccessejcywail.supabase.co', _SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
+
+function sbp(method, path, params, body, cb){
+  var url=_SBU+'/rest/v1/'+path+(params?'?'+params:'');
+  var xhr=new XMLHttpRequest();
+  xhr.open(method,url,true);
+  xhr.setRequestHeader('apikey',_SBK);
+  xhr.setRequestHeader('Authorization','Bearer '+_SBK);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('Prefer','return=representation');
+  xhr.timeout=8000;
+  xhr.onload=function(){try{cb(null,JSON.parse(xhr.responseText));}catch(e){cb(null,[]);}};
+  xhr.onerror=xhr.ontimeout=function(){cb(new Error('net'),[]);};
+  xhr.send(body?JSON.stringify(body):null);
+}
+
+function loadP(cb){
+  sbp('GET','projetos','select=*&order=created_at.desc',null,function(err,d){
+    // Normalize column names (Supabase has capitalized, app uses lowercase)
+    P=(d||[]).map(function(p){
+      return {
+        id: p.id,
+        nome: p.Nome||p.nome||'',
+        cidade: p.Cidade||p.cidade||'',
+        discord: p.Discord||p.discord||'',
+        itens: p.itens||'',
+        valor: p.Valor||p.valor||0,
+        vendedor: p.vendedor||'',
+        status: p.status||'pending',
+        date: p.date||p.created_at||new Date().toISOString()
+      };
+    });
+    if(cb)cb();
+  });
+}
+
+function saveP(){
+  // Projects saved individually via addP/updateP/deleteP
+}
 function saveM(){ localStorage.setItem('cs_membros', JSON.stringify(MEMBROS)); }
 function gid(){ return 'P'+Date.now().toString(36).toUpperCase().slice(-6); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -869,12 +903,20 @@ function setRfCidade(val,el){
 
 // ═══ ACTIONS ═══
 function finish(id){
-  const p=P.find(x=>x.id===id);
-  if(p){ p.status='done'; saveP(); rdr(curPage); toast('✅ Projeto finalizado!'); }
+  sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
+    if(err){toast('Erro ao finalizar');return;}
+    const p=P.find(x=>x.id===id);
+    if(p)p.status='done';
+    rdr(curPage);toast('✅ Projeto finalizado!');
+  });
 }
 function del(id){
-  if(!confirm('Remover este projeto?')) return;
-  P=P.filter(x=>x.id!==id); saveP(); rdr(curPage); toast('🗑 Removido');
+  if(!confirm('Remover este projeto?'))return;
+  sbp('DELETE','projetos','id=eq.'+id,null,function(err){
+    if(err){toast('Erro ao remover');return;}
+    P=P.filter(x=>x.id!==id);
+    rdr(curPage);toast('🗑 Removido');
+  });
 }
 
 // ═══ MODAL ═══
@@ -894,12 +936,15 @@ function addProj(){
   const vendedor=document.getElementById('f-vend').value.trim();
   const itens=document.getElementById('f-itens').value.trim();
   if(!nome||!cidade||!vendedor){ alert('Preencha Nome, Cidade e Membro CS.'); return; }
-  P.unshift({id:gid(),nome,cidade,discord,itens,valor,vendedor,status:'pending',date:new Date().toISOString()});
-  saveP();
-  ['f-nome','f-discord','f-valor','f-itens'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-cidade').value='';
-  document.getElementById('f-vend').value=''; document.getElementById('f-vend').disabled=false;
-  closeModal('overlay-proj'); rdr(curPage); populateSelects(); toast('📦 Solicitação adicionada!');
+  const proj={Nome:nome,Cidade:cidade,Discord:discord,itens,Valor:valor,vendedor,status:'pending',date:new Date().toISOString()};
+  sbp('POST','projetos','',proj,function(err,d){
+    if(err||!d||!d.length){alert('Erro ao salvar projeto.');return;}
+    P.unshift(d[0]);
+    ['f-nome','f-discord','f-valor','f-itens'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-cidade').value='';
+    document.getElementById('f-vend').value=''; document.getElementById('f-vend').disabled=false;
+    closeModal('overlay-proj'); rdr(curPage);
+  }); populateSelects(); toast('📦 Solicitação adicionada!');
 }
 
 // ═══ EXPORT ═══
@@ -935,9 +980,11 @@ function dashInit(){
 
   
 </script>
-
+</body>
+</html>
 <!-- LOGIN -->
 
+<!-- ═══ LOGIN + SUPABASE ═══ -->
 <style>
 #LG{position:fixed;inset:0;background:#080b10;z-index:999999;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif}
 .LC{background:#0f1420;border:1px solid #1e2d45;border-radius:20px;padding:40px;width:420px;max-width:95vw}
@@ -957,9 +1004,11 @@ function dashInit(){
 .LEYE{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0;line-height:1}
 .LBT{width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;border:none;cursor:pointer;margin-top:6px}
 .LBT:hover{opacity:.9}
+.LBT:disabled{opacity:.5;cursor:not-allowed}
 .LMG{border-radius:8px;padding:10px 14px;font-size:12px;font-weight:600;margin-top:12px;text-align:center;display:none}
 .LERR{background:#f7545415;border:1px solid #f7545440;color:#f75454;display:block}
 .LOK{background:#22d18715;border:1px solid #22d18740;color:#22d187;display:block}
+.LWRN{background:#f5c84215;border:1px solid #f5c84240;color:#f5c842;display:block}
 .LHT{font-size:11px;color:#4a6080;text-align:center;margin-top:14px;line-height:1.6}
 </style>
 
@@ -978,7 +1027,7 @@ function dashInit(){
     <div class="LPW"><input class="LIN E" type="password" id="LP" placeholder="Sua senha" autocomplete="current-password">
     <button class="LEYE" type="button" onclick="var e=document.getElementById('LP');e.type=e.type=='password'?'text':'password';this.textContent=e.type=='password'?'👁️':'🙈'">👁️</button></div>
    </div>
-   <button class="LBT" onclick="LLOG()">Entrar</button>
+   <button class="LBT" id="LBI" onclick="LLOG()">Entrar</button>
    <div class="LMG" id="LMI"></div>
   </div>
   <div id="LPR" style="display:none">
@@ -988,7 +1037,7 @@ function dashInit(){
     <div class="LPW"><input class="LIN E" type="password" id="LRP" placeholder="Mínimo 4 caracteres">
     <button class="LEYE" type="button" onclick="var e=document.getElementById('LRP');e.type=e.type=='password'?'text':'password';this.textContent=e.type=='password'?'👁️':'🙈'">👁️</button></div>
    </div>
-   <button class="LBT" onclick="LREG()">Criar Conta</button>
+   <button class="LBT" id="LBR" onclick="LREG()">Criar Conta</button>
    <div class="LMG" id="LMR"></div>
    <div class="LHT">Peça um código de convite ao administrador pelo Discord.</div>
   </div>
@@ -996,15 +1045,32 @@ function dashInit(){
 </div>
 
 <script>
-var UK='_cs_u',SK='_cs_s',CK='_cs_codes';
-function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
-function SU(u){localStorage.setItem(UK,JSON.stringify(u));}
-function GC(){try{return JSON.parse(localStorage.getItem(CK)||'[]');}catch(e){return [];}}
-function SC(c){localStorage.setItem(CK,JSON.stringify(c));}
+// ═══ SUPABASE CONFIG ═══
+var SBU='https://lomtwfoccessejcywail.supabase.co';
+var SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
 
-// Default admin
-if(!GU().length){SU([{id:1,usuario:'admin',senha:'admin123',role:'Administrador'}]);}
+function sb(method,table,params,body,cb){
+  var url=SBU+'/rest/v1/'+table+(params?'?'+params:'');
+  var xhr=new XMLHttpRequest();
+  xhr.open(method,url,true);
+  xhr.setRequestHeader('apikey',SBK);
+  xhr.setRequestHeader('Authorization','Bearer '+SBK);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.setRequestHeader('Prefer','return=representation');
+  xhr.timeout=8000;
+  xhr.onload=function(){
+    try{cb(null,JSON.parse(xhr.responseText));}
+    catch(e){cb(null,[]);}
+  };
+  xhr.onerror=xhr.ontimeout=function(){cb(new Error('network'),[]);};
+  xhr.send(body?JSON.stringify(body):null);
+}
 
+// ═══ SESSION ═══
+var SK='_cs_s';
+function GS(){try{return JSON.parse(sessionStorage.getItem(SK)||'null');}catch(e){return null;}}
+
+// ═══ LOGIN ═══
 function LSW(t){
   document.getElementById('LT1').className='LTB '+(t==='in'?'LON':'LOFF');
   document.getElementById('LT2').className='LTB '+(t==='rg'?'LON':'LOFF');
@@ -1016,179 +1082,198 @@ function LM(id,txt,cls){var e=document.getElementById(id);if(!e)return;e.classNa
 function LLOG(){
   var u=document.getElementById('LU').value.trim().toLowerCase();
   var p=document.getElementById('LP').value;
+  var btn=document.getElementById('LBI');
   if(!u||!p){LM('LMI','Preencha usuário e senha.','ERR');return;}
-  var f=GU().find(function(x){return x.usuario===u&&x.senha===p;});
-  if(!f){LM('LMI','Usuário ou senha incorretos.','ERR');return;}
-  sessionStorage.setItem(SK,JSON.stringify(f));
-  LINIT(f);
+  btn.disabled=true;btn.textContent='Verificando...';
+  sb('GET','cs_usuarios','select=*&usuario=eq.'+encodeURIComponent(u)+'&senha=eq.'+encodeURIComponent(p)+'&aprovado=eq.true',null,function(err,d){
+    btn.disabled=false;btn.textContent='Entrar';
+    if(err||!d||!d.length){LM('LMI',err?'Erro de conexão. Tente novamente.':'Usuário ou senha incorretos.','ERR');return;}
+    var usr=d[0];
+    sessionStorage.setItem(SK,JSON.stringify(usr));
+    LINIT(usr);
+  });
 }
 
 function LREG(){
   var code=document.getElementById('LRC').value.trim().toUpperCase();
   var u=document.getElementById('LRU').value.trim().toLowerCase();
   var p=document.getElementById('LRP').value;
+  var btn=document.getElementById('LBR');
   if(!code){LM('LMR','Digite o código de convite.','ERR');return;}
   if(!u||!p){LM('LMR','Preencha todos os campos.','ERR');return;}
   if(p.length<4){LM('LMR','Senha muito curta (mín. 4).','ERR');return;}
-  // Validate: check global used codes list + local codes
-  var usedKey='_cs_used';
-  var used=JSON.parse(localStorage.getItem(usedKey)||'[]');
-  if(used.indexOf(code)>=0){LM('LMR','Código já foi utilizado.','ERR');return;}
-  // Check if code exists in global valid codes (stored by admin under shared key)
-  var validCodes=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
-  // Also check local codes
-  var localCodes=GC();
-  var inLocal=localCodes.find(function(c){return c.code===code&&!c.used;});
-  var inValid=validCodes.indexOf(code)>=0;
-  if(!inLocal&&!inValid){LM('LMR','Código inválido. Peça um novo ao administrador.','ERR');return;}
-  var us=GU();
-  if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe. Escolha outro.','ERR');return;}
-  // Mark as used
-  used.push(code);
-  localStorage.setItem(usedKey,JSON.stringify(used));
-  if(inLocal){inLocal.used=true;inLocal.usedBy=u;SC(localCodes);}
-  us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS'});
-  SU(us);
-  LM('LMR','✅ Conta criada! Clique em Entrar.','OK');
-  setTimeout(function(){LSW('in');var el=document.getElementById('LU');if(el)el.value=u;},2000);
+  btn.disabled=true;btn.textContent='Verificando...';
+  // Check code in Supabase
+  sb('GET','cs_codigos','select=*&codigo=eq.'+encodeURIComponent(code)+'&usado=eq.false',null,function(err,d){
+    if(err||!d||!d.length){
+      btn.disabled=false;btn.textContent='Criar Conta';
+      LM('LMR',err?'Erro de conexão.':'Código inválido ou já utilizado.','ERR');return;
+    }
+    var cod=d[0];
+    // Check if username exists
+    sb('GET','cs_usuarios','select=id&usuario=eq.'+encodeURIComponent(u),null,function(err2,ex){
+      if(ex&&ex.length){btn.disabled=false;btn.textContent='Criar Conta';LM('LMR','Usuário já existe. Escolha outro.','ERR');return;}
+      // Create user
+      sb('POST','cs_usuarios','',{usuario:u,senha:p,role:'Equipe CS',aprovado:true},function(err3,nu){
+        if(err3){btn.disabled=false;btn.textContent='Criar Conta';LM('LMR','Erro ao criar conta.','ERR');return;}
+        // Mark code as used
+        sb('PATCH','cs_codigos','id=eq.'+cod.id,'',{usado:true,usado_por:u},function(){});
+        btn.disabled=false;btn.textContent='Criar Conta';
+        LM('LMR','✅ Conta criada! Clique em Entrar.','OK');
+        setTimeout(function(){LSW('in');var el=document.getElementById('LU');if(el)el.value=u;},2000);
+      });
+    });
+  });
 }
 
 function LINIT(usr){
   document.getElementById('LG').style.display='none';
-  var nm=document.querySelector('#tb-nm-el,.tb-username');if(nm)nm.textContent=usr.usuario;
-  var av=document.querySelector('#tb-av-el,.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
-  var em=document.querySelector('#tb-em-el,.tb-email');if(em)em.textContent=usr.role;
+  var nm=document.querySelector('.tb-username');if(nm)nm.textContent=usr.usuario;
+  var av=document.querySelector('.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
+  var em=document.querySelector('.tb-email');if(em)em.textContent=usr.role;
+  // Add logout button
+  var tbr=document.querySelector('.topbar-r');
+  if(tbr&&!document.getElementById('_LB')){
+    var b=document.createElement('button');
+    b.id='_LB';b.textContent='⏻ Sair';
+    b.style.cssText='background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
+    b.onmouseover=function(){b.style.color='#f75454';};
+    b.onmouseout=function(){b.style.color='#4a6080';};
+    b.onclick=function(){sessionStorage.removeItem(SK);location.reload();};
+    tbr.appendChild(b);
+  }
   if(usr.role==='Administrador'){
-    var sb=document.getElementById('sb-acessos');if(sb)sb.style.display='flex';
+    var sb2=document.getElementById('sb-acessos');if(sb2)sb2.style.display='flex';
   }
   if(typeof dashInit==='function')dashInit();
 }
 
-// ── Acessos page ──
+// ═══ ACESSOS PAGE ═══
 function renderAcessos(){
   var el=document.getElementById('acessos-content');
   if(!el)return;
-  var codes=GC();
-  var users=GU().filter(function(u){return u.role!=='Administrador';});
-  var ativos=codes.filter(function(c){return !c.used;});
-  var usados=codes.filter(function(c){return c.used;});
-  var html='';
+  el.innerHTML='<div style="color:#4a6080;font-size:13px;padding:20px;text-align:center">Carregando...</div>';
+  // Load codes and users in parallel
+  sb('GET','cs_codigos','select=*&order=created_at.desc',null,function(err,codes){
+    codes=codes||[];
+    sb('GET','cs_usuarios','select=*&role=neq.Administrador&order=created_at.asc',null,function(err2,users){
+      users=users||[];
+      var ativos=codes.filter(function(c){return !c.usado;});
+      var usados=codes.filter(function(c){return c.usado;});
+      var html='';
 
-  // Generate code section
-  html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
-  html+='<div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:4px">🎟️ Gerar Código de Convite</div>';
-  html+='<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Gere um código único e envie pelo Discord para o membro entrar.</div>';
-  html+='<button onclick="gerarCodigo()" style="padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">＋ Gerar Código</button>';
-  html+='<div id="novo-cod" style="margin-top:14px"></div>';
-  html+='</div>';
-
-  // Active codes
-  if(ativos.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">⏳ Códigos Ativos ('+ativos.length+')</div>';
-    ativos.forEach(function(c){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
-      html+='<div style="flex:1;font-family:monospace;font-size:16px;font-weight:900;color:#00c6ff;letter-spacing:3px">'+c.code+'</div>';
-      html+='<button onclick="copCod(\''+c.code+'\')" style="padding:5px 12px;border-radius:7px;background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copiar</button>';
-      html+='<button onclick="delCod(\''+c.code+'\')" style="padding:5px 10px;border-radius:7px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:11px;cursor:pointer">✕</button>';
+      // Generate code
+      html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+      html+='<div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:4px">🎟️ Gerar Código de Convite</div>';
+      html+='<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Gere um link único e envie pelo Discord para o membro entrar.</div>';
+      html+='<button onclick="gerarCodigo()" style="padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">＋ Gerar Código</button>';
+      html+='<div id="novo-cod" style="margin-top:14px"></div>';
       html+='</div>';
-    });
-    html+='</div>';
-  }
 
-  // Used codes
-  if(usados.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">✅ Códigos Usados ('+usados.length+')</div>';
-    usados.forEach(function(c){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:9px 14px;margin-bottom:6px">';
-      html+='<div style="flex:1;font-family:monospace;font-size:13px;color:#4a6080;text-decoration:line-through">'+c.code+'</div>';
-      html+='<div style="font-size:11px;color:#22d187;font-weight:600">→ '+c.usedBy+'</div>';
-      html+='</div>';
-    });
-    html+='</div>';
-  }
+      // Active codes
+      if(ativos.length){
+        html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+        html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">⏳ Códigos Ativos ('+ativos.length+')</div>';
+        ativos.forEach(function(c){
+          var link=window.location.origin+window.location.pathname+'?code='+c.codigo;
+          html+='<div style="background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:12px 14px;margin-bottom:7px">';
+          html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">';
+          html+='<div style="flex:1;font-family:monospace;font-size:16px;font-weight:900;color:#00c6ff;letter-spacing:3px">'+c.codigo+'</div>';
+          html+='<button onclick="copiarLink(\''+link+'\')" style="padding:5px 12px;border-radius:7px;background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copiar Link</button>';
+          html+='<button onclick="deletarCodigo('+c.id+')" style="padding:5px 10px;border-radius:7px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:11px;cursor:pointer">✕</button>';
+          html+='</div>';
+          html+='<div style="font-size:10px;color:#4a6080;word-break:break-all">🔗 '+link+'</div>';
+          html+='</div>';
+        });
+        html+='</div>';
+      }
 
-  // Members
-  if(users.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
-    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">👥 Membros ('+users.length+')</div>';
-    users.forEach(function(u){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:6px">';
-      html+='<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>';
-      html+='<div style="flex:1;font-size:13px;font-weight:600;color:var(--txt)">'+u.usuario+'</div>';
-      html+='<div style="font-size:11px;color:var(--muted)">'+u.role+'</div>';
-      html+='<button onclick="remMembro('+u.id+')" style="padding:4px 10px;border-radius:6px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600">✕ Remover</button>';
-      html+='</div>';
-    });
-    html+='</div>';
-  }
+      // Used codes
+      if(usados.length){
+        html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+        html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">✅ Usados ('+usados.length+')</div>';
+        usados.forEach(function(c){
+          html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:9px 14px;margin-bottom:6px">';
+          html+='<div style="flex:1;font-family:monospace;font-size:13px;color:#4a6080;text-decoration:line-through">'+c.codigo+'</div>';
+          html+='<div style="font-size:11px;color:#22d187;font-weight:600">→ '+(c.usado_por||'?')+'</div>';
+          html+='</div>';
+        });
+        html+='</div>';
+      }
 
-  el.innerHTML=html;
+      // Members
+      if(users.length){
+        html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+        html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">👥 Membros ('+users.length+')</div>';
+        users.forEach(function(u){
+          html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:6px">';
+          html+='<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>';
+          html+='<div style="flex:1;font-size:13px;font-weight:600;color:var(--txt)">'+u.usuario+'</div>';
+          html+='<div style="font-size:11px;color:var(--muted)">'+u.role+'</div>';
+          html+='<button onclick="removerMembro('+u.id+')" style="padding:4px 10px;border-radius:6px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif">✕ Remover</button>';
+          html+='</div>';
+        });
+        html+='</div>';
+      }
+
+      el.innerHTML=html;
+    });
+  });
 }
 
 function gerarCodigo(){
   var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var code='';for(var i=0;i<8;i++)code+=chars[Math.floor(Math.random()*chars.length)];
-  var codes=GC();
-  codes.push({code:code,created:Date.now(),used:false,usedBy:null});
-  SC(codes);
-  // Also save to shared valid codes list so member can validate
-  var valid=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
-  valid.push(code);
-  localStorage.setItem('_cs_valid_codes',JSON.stringify(valid));
-  var div=document.getElementById('novo-cod');
-  if(div){
-    div.innerHTML='<div style="background:#00c6ff15;border:2px solid #00c6ff40;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-top:4px">'
-      +'<div style="font-family:monospace;font-size:24px;font-weight:900;color:#00c6ff;letter-spacing:4px">'+code+'</div>'
-      +'<button onclick="copCod(\''+code+'\')" style="padding:8px 16px;border-radius:8px;background:#00c6ff;color:#000;border:none;font-family:Outfit,sans-serif;font-size:12px;font-weight:800;cursor:pointer">📋 Copiar</button>'
-      +'</div>';
-  }
-  renderAcessos();
-}
-
-function copCod(code){
-  var link=window.location.origin+window.location.pathname+'?code='+code;
-  navigator.clipboard.writeText(link).catch(function(){
-    navigator.clipboard.writeText(code).catch(function(){});
+  sb('POST','cs_codigos','',{codigo:code,usado:false,usado_por:null},function(err,d){
+    if(err){alert('Erro ao gerar código.');return;}
+    var link=window.location.origin+window.location.pathname+'?code='+code;
+    var div=document.getElementById('novo-cod');
+    if(div){
+      div.innerHTML='<div style="background:#00c6ff15;border:2px solid #00c6ff40;border-radius:10px;padding:14px 18px;margin-top:4px">'
+        +'<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">'
+        +'<div style="font-family:monospace;font-size:24px;font-weight:900;color:#00c6ff;letter-spacing:4px">'+code+'</div>'
+        +'<button onclick="copiarLink(\''+link+'\')" style="padding:8px 16px;border-radius:8px;background:#00c6ff;color:#000;border:none;font-family:Outfit,sans-serif;font-size:12px;font-weight:800;cursor:pointer">📋 Copiar Link</button>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#4a6080;word-break:break-all">🔗 '+link+'</div>'
+        +'</div>';
+    }
+    renderAcessos();
   });
-  alert('Link copiado!\n\n'+link+'\n\nEnvie esse link pelo Discord. A pessoa abre e o código já vem preenchido!');
 }
 
-function delCod(code){
-  if(!confirm('Deletar código '+code+'?'))return;
-  SC(GC().filter(function(c){return c.code!==code;}));
-  renderAcessos();
+function copiarLink(link){
+  navigator.clipboard.writeText(link).then(function(){
+    alert('Link copiado!\n\n'+link+'\n\nEnvie esse link pelo Discord!');
+  }).catch(function(){
+    prompt('Copie o link:',link);
+  });
 }
 
-function remMembro(id){
+function deletarCodigo(id){
+  if(!confirm('Deletar este código?'))return;
+  sb('DELETE','cs_codigos','id=eq.'+id,null,function(){renderAcessos();});
+}
+
+function removerMembro(id){
   if(!confirm('Remover este membro?'))return;
-  SU(GU().filter(function(u){return u.id!==id;}));
-  renderAcessos();
+  sb('DELETE','cs_usuarios','id=eq.'+id,null,function(){renderAcessos();});
 }
 
-// Auto-fill code from URL
+// ═══ AUTO-FILL CODE FROM URL ═══
 (function(){
   var params=new URLSearchParams(window.location.search);
   var urlCode=params.get('code');
   if(urlCode){
-    document.getElementById('LG').style.display='flex';
     LSW('rg');
     var el=document.getElementById('LRC');
     if(el)el.value=urlCode.toUpperCase();
-    // Register URL code as valid
-    var valid=JSON.parse(localStorage.getItem('_cs_valid_codes')||'[]');
-    if(valid.indexOf(urlCode.toUpperCase())<0){
-      valid.push(urlCode.toUpperCase());
-      localStorage.setItem('_cs_valid_codes',JSON.stringify(valid));
-    }
+    document.getElementById('LG').style.display='flex';
+    return;
   }
+  var s=GS();
+  if(s){LINIT(s);}
+  else{document.getElementById('LG').style.display='flex';}
 })();
-
-// Init
-var s=sessionStorage.getItem(SK);
-if(s){try{var _u=JSON.parse(s);if(_u)LINIT(_u);}catch(e){}}
-else{document.getElementById('LG').style.display='flex';}
 </script>
 </body>
 </html>

@@ -934,7 +934,7 @@ function addProj(){
   const vendedor=document.getElementById('f-vend').value.trim();
   const itens=document.getElementById('f-itens').value.trim();
   if(!nome||!cidade||!vendedor){ alert('Preencha Nome, Cidade e Membro CS.'); return; }
-  const proj={nome:nome,cidade:cidade,discord:discord,itens:itens,valor:valor,vendedor:vendedor,status:'pending',date:new Date().toISOString()};
+  const proj={nome:nome,cidade:cidade,discord:discord,itens:itens,valor:valor,vendedor:vendedor,status:'pending'};
   sbp('POST','projetos','',proj,function(err,d){
     if(err||!d||!d.length){alert('Erro ao salvar projeto.');return;}
     P.unshift(d[0]);

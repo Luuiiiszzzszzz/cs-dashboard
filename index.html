@@ -518,14 +518,10 @@ select option{background:var(--s2);}
 const CIDADES = ['Nobre','Santa','GrandeRP','MaltaRP','Real RP','KNG','Royal','District99','PrimeRP','Boomerang','GoatRP','Maresia','Fronteira','Universo'];
 const CIDADE_COLORS = ['#00c6ff','#22d187','#f59e0b','#ec4899','#a855f7','#06b6d4','#f75454','#34d399','#0077ff','#eab308','#a78bfa','#fc6d26','#ff6b35','#7c3aed'];
 
-// ═══ MEMBROS padrão ═══
-let MEMBROS = JSON.parse(localStorage.getItem('cs_membros')||'null') || [
-  {id:'mel',    name:'Mel',     emoji:'🌻',color:'#f59e0b',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'migue',  name:'Migue',   emoji:'🌊',color:'#06b6d4',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'neew',   name:'Neew',    emoji:'🌸',color:'#ec4899',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'luisa',  name:'Luisa',   emoji:'💜',color:'#a78bfa',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'juniola',name:'Juniola', emoji:'🌿',color:'#34d399',cargo:'CS Pós-Vendas',acesso:true},
-];
+// ═══ MEMBROS (do Supabase) ═══
+const MBR_COLORS=['#f59e0b','#06b6d4','#ec4899','#a78bfa','#34d399','#00c6ff','#f75454','#a855f7','#22d187','#0077ff'];
+const MBR_EMOJIS=['🌻','🌊','🌸','💜','🌿','⚡','🔥','🌙','🎯','💎'];
+let MEMBROS = [];
 
 // ═══ PROJETOS (Supabase) ═══
 let P = [];
@@ -574,7 +570,7 @@ function loadP(cb){
 function saveP(){
   // Projects saved individually via addP/updateP/deleteP
 }
-function saveM(){ localStorage.setItem('cs_membros', JSON.stringify(MEMBROS)); }
+function saveM(){}
 function gid(){ return 'P'+Date.now().toString(36).toUpperCase().slice(-6); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function fdt(d){ return new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }
@@ -672,7 +668,7 @@ function mkStats4(list){
 // ═══ TABLE ROWS ═══
 function mkRows(list, showStatus){
   return list.map((p,i)=>`
-    <tr>
+    <tr id="tr-${p.id}">
       <td class="mono" style="color:var(--muted)">${i+1}</td>
       <td class="td-nome">${esc(p.nome)}</td>
       <td>${cidTag(p.cidade)}</td>
@@ -766,27 +762,24 @@ function rMembros(){
   document.getElementById('sm-proj').textContent=P.length;
   const grid=document.getElementById('member-grid');
   if(!grid) return;
-  grid.innerHTML=MEMBROS.map(m=>`
-    <div class="member-card">
-      <div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>
+  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
+  grid.innerHTML=MEMBROS.map(m=>{
+    const tot=P.filter(p=>p.vendedor===m.name).length;
+    const pen=P.filter(p=>p.vendedor===m.name&&p.status==='pending').length;
+    const av=m.discord_avatar?`<img src="${m.discord_avatar}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;">`:`<div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>`;
+    return `<div class="member-card">
+      ${av}
       <div class="mc-info">
         <div class="mc-name">${esc(m.name)}</div>
         <div class="mc-role" style="color:${m.color}99">${esc(m.cargo)}</div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:7px;">
-          <span style="font-size:10px;color:var(--muted);">Acesso:</span>
-          <label class="toggle"><input type="checkbox" ${m.acesso?'checked':''} onchange="toggleAccess('${m.id}',this.checked)"><span class="toggle-slider"></span></label>
-          <span style="font-size:10px;color:${m.acesso?'var(--grn)':'var(--muted)'};">${m.acesso?'Ativo':'Inativo'}</span>
-        </div>
-        <div style="margin-top:4px;font-size:10px;color:var(--muted);">
-          ${P.filter(p=>p.vendedor===m.name).length} projetos ·
-          ${P.filter(p=>p.vendedor===m.name&&p.status==='pending').length} pendentes
-        </div>
+        ${m.discord_username?`<div style="font-size:10px;color:#5865f2;">🎮 ${esc(m.discord_username)}</div>`:''}
+        <div style="margin-top:4px;font-size:10px;color:var(--muted);">${tot} proj · ${pen} pend</div>
       </div>
       <div class="mc-actions">
-        <button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')">✕</button>
+        ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')">✕</button>`:''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleAccess(id, val){
@@ -903,11 +896,13 @@ function setRfCidade(val,el){
 
 // ═══ ACTIONS ═══
 function finish(id){
+  if(!confirm('Finalizar este projeto?'))return;
   sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
     if(err){toast('Erro ao finalizar');return;}
     const p=P.find(x=>x.id===id);
     if(p)p.status='done';
-    rdr(curPage);toast('✅ Projeto finalizado!');
+    toast('✅ Projeto finalizado!');
+    goPage('finalizados');
   });
 }
 function del(id){
@@ -915,7 +910,10 @@ function del(id){
   sbp('DELETE','projetos','id=eq.'+id,null,function(err){
     if(err){toast('Erro ao remover');return;}
     P=P.filter(x=>x.id!==id);
-    rdr(curPage);toast('🗑 Removido');
+    var tr=document.getElementById('tr-'+id);
+    if(tr){tr.style.opacity='0';tr.style.transition='opacity .25s';setTimeout(function(){rdr(curPage);},260);}
+    else rdr(curPage);
+    toast('🗑 Removido');
   });
 }
 
@@ -970,11 +968,17 @@ function toast(msg){
   document.getElementById(id).addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(id); });
 });
 
-// ═══ INIT ═══ (called by login system after auth)
+// ═══ INIT ═══
+var _currentUser=null;
 function dashInit(){
-  populateSelects();
   buildCidadeChips();
-  rdr('solicitacoes');
+  sbp('GET','cs_usuarios','select=usuario,role,discord_avatar,discord_username&role=neq.Administrador&aprovado=eq.true&order=usuario.asc',null,function(err,users){
+    MEMBROS=(users||[]).map(function(u,i){
+      return {id:u.usuario,name:u.usuario,emoji:MBR_EMOJIS[i%MBR_EMOJIS.length],color:MBR_COLORS[i%MBR_COLORS.length],cargo:u.role||'CS Pós-Vendas',acesso:true,discord_avatar:u.discord_avatar||null,discord_username:u.discord_username||null};
+    });
+    populateSelects();
+    loadP(function(){rdr('solicitacoes');});
+  });
 }
 
 
@@ -1127,25 +1131,57 @@ function LREG(){
 }
 
 function LINIT(usr){
+  _currentUser=usr;
   document.getElementById('LG').style.display='none';
   var nm=document.querySelector('.tb-username');if(nm)nm.textContent=usr.usuario;
-  var av=document.querySelector('.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
+  var av=document.querySelector('.tb-avatar');if(av){
+    if(usr.discord_avatar){av.innerHTML='<img src="'+usr.discord_avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">';}
+    else{av.textContent=usr.usuario.substring(0,2).toUpperCase();}
+  }
   var em=document.querySelector('.tb-email');if(em)em.textContent=usr.role;
-  // Add logout button
-  var tbr=document.querySelector('.topbar-r');
-  if(tbr&&!document.getElementById('_LB')){
-    var b=document.createElement('button');
-    b.id='_LB';b.textContent='⏻ Sair';
-    b.style.cssText='background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
-    b.onmouseover=function(){b.style.color='#f75454';};
-    b.onmouseout=function(){b.style.color='#4a6080';};
-    b.onclick=function(){sessionStorage.removeItem(SK);location.reload();};
-    tbr.appendChild(b);
+  // Menu perfil
+  var tbr=document.querySelector('.topbar-right');
+  if(tbr&&!document.getElementById('_PM')){
+    var menu=document.createElement('div');
+    menu.id='_PM';
+    menu.style.cssText='display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:16px;z-index:500;min-width:240px;box-shadow:0 8px 32px #00000080;';
+    menu.innerHTML='<div style="font-size:14px;font-weight:800;color:#d8e8ff;margin-bottom:4px" id="_pmName">'+usr.usuario+'</div>'
+      +'<div style="font-size:11px;color:#4a6080;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1e2d45">'+usr.role+'</div>'
+      +'<div id="_pmDiscord" style="margin-bottom:10px"></div>'
+      +'<button id="_pmDBtn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;">🎮 Vincular Discord</button>'
+      +'<button onclick="sessionStorage.removeItem(''+SK+'');location.reload()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>';
+    document.body.appendChild(menu);
+    // Abrir/fechar ao clicar no avatar
+    document.querySelector('.tb-user').style.cursor='pointer';
+    document.querySelector('.tb-user').onclick=function(){menu.style.display=menu.style.display==='none'?'block':'none';};
+    document.addEventListener('click',function(e){
+      if(!menu.contains(e.target)&&!document.querySelector('.tb-user').contains(e.target))menu.style.display='none';
+    });
+    // Verificar Discord vinculado
+    if(usr.discord_avatar){
+      document.getElementById('_pmDiscord').innerHTML='<div style="background:#5865f215;border:1px solid #5865f240;border-radius:9px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px"><img src="'+usr.discord_avatar+'" style="width:28px;height:28px;border-radius:50%;"><div><div style="font-size:10px;color:#5865f2;font-weight:700;">✓ Discord</div><div style="font-size:12px;color:#d8e8ff;">'+usr.discord_username+'</div></div></div>';
+      document.getElementById('_pmDBtn').textContent='🔄 Reconectar Discord';
+    }
   }
   if(usr.role==='Administrador'){
     var sb2=document.getElementById('sb-acessos');if(sb2)sb2.style.display='flex';
   }
+  // Checar retorno OAuth
+  var params=new URLSearchParams(window.location.search);
+  if(params.get('discord_ok')==='1'){
+    toast('✅ Discord vinculado!');
+    window.history.replaceState({},'',window.location.pathname);
+    // Recarrega dados do usuário
+    sb('GET','cs_usuarios','select=*&usuario=eq.'+encodeURIComponent(usr.usuario),null,function(err,d){
+      if(d&&d.length){sessionStorage.setItem(SK,JSON.stringify(d[0]));}
+    });
+  }
   if(typeof dashInit==='function')dashInit();
+}
+
+function vincularDiscord(){
+  if(!_currentUser)return;
+  window.location.href='https://bot-cs-p-s-venda-production.up.railway.app/discord/login?usuario='+encodeURIComponent(_currentUser.usuario);
 }
 
 // ═══ ACESSOS PAGE ═══

@@ -439,9 +439,7 @@ select option{background:var(--s2);}
           <div class="page-title">👥 Time · Equipe CS</div>
           <div class="page-sub">Gerencie os membros e acessos da equipe</div>
         </div>
-        <div class="hdr-right">
-          <button class="btn btn-acc" onclick="openAddMember()">＋ Adicionar Membro</button>
-        </div>
+
       </div>
       <div class="stat-row" id="st-membros">
         <div class="stat-card sc-t"><div class="stat-lbl">Total Membros</div><div class="stat-num" id="sm-total">0</div></div>
@@ -567,14 +565,32 @@ select option{background:var(--s2);}
 const CIDADES = ['Nobre','Santa','GrandeRP','MaltaRP','Real RP','KNG','Royal','District99','PrimeRP','Boomerang','GoatRP','Maresia','Fronteira','Universo'];
 const CIDADE_COLORS = ['#00c6ff','#22d187','#f59e0b','#ec4899','#a855f7','#06b6d4','#f75454','#34d399','#0077ff','#eab308','#a78bfa','#fc6d26','#ff6b35','#7c3aed'];
 
-// ═══ MEMBROS padrão ═══
-let MEMBROS = JSON.parse(localStorage.getItem('cs_membros')||'null') || [
-  {id:'mel',    name:'Mel',     emoji:'🌻',color:'#f59e0b',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'migue',  name:'Migue',   emoji:'🌊',color:'#06b6d4',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'neew',   name:'Neew',    emoji:'🌸',color:'#ec4899',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'luisa',  name:'Luisa',   emoji:'💜',color:'#a78bfa',cargo:'CS Pós-Vendas',acesso:true},
-  {id:'juniola',name:'Juniola', emoji:'🌿',color:'#34d399',cargo:'CS Pós-Vendas',acesso:true},
-];
+// ═══ MEMBROS (carregado do Supabase) ═══
+let MEMBROS = [];
+const MEMBER_COLORS = ['#f59e0b','#06b6d4','#ec4899','#a78bfa','#34d399','#00c6ff','#f75454','#a855f7','#22d187','#0077ff'];
+const MEMBER_EMOJIS = ['🌻','🌊','🌸','💜','🌿','⚡','🔥','🌙','🎯','💎'];
+
+function loadMembros(cb){
+  sb('GET','cs_usuarios','select=*&role=neq.Administrador&aprovado=eq.true&order=usuario.asc',null,function(err,users){
+    users=users||[];
+    MEMBROS=users.map(function(u,i){
+      return {
+        id: String(u.id||u.usuario),
+        name: u.usuario,
+        emoji: MEMBER_EMOJIS[i%MEMBER_EMOJIS.length],
+        color: MEMBER_COLORS[i%MEMBER_COLORS.length],
+        cargo: u.role||'CS Pós-Vendas',
+        acesso: u.aprovado!==false,
+        discord_avatar: u.discord_avatar||null,
+        discord_username: u.discord_username||null,
+        _raw: u
+      };
+    });
+    if(cb)cb();
+  });
+}
+
+function saveM(){ /* agora usa Supabase */ }
 
 // ═══ PROJETOS (Supabase) ═══
 let P = [];
@@ -834,37 +850,53 @@ function rMembros(){
   document.getElementById('sm-proj').textContent=P.length;
   const grid=document.getElementById('member-grid');
   if(!grid) return;
-  grid.innerHTML=MEMBROS.map(m=>`
-    <div class="member-card">
-      <div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>
+  const isAdmin=_currentUser&&_currentUser.role==='Administrador';
+  grid.innerHTML=MEMBROS.map(m=>{
+    const total=P.filter(p=>p.vendedor===m.name).length;
+    const pen=P.filter(p=>p.vendedor===m.name&&p.status==='pending').length;
+    const fin=P.filter(p=>p.vendedor===m.name&&p.status==='done').length;
+    const avatarHtml=m.discord_avatar
+      ?`<img src="${m.discord_avatar}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:2px solid ${m.color}60;" onerror="this.style.display='none'">`
+      :`<div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>`;
+    const discordTag=m.discord_username?`<span style="font-size:10px;color:#5865f2;font-weight:600;">🎮 ${esc(m.discord_username)}</span>`:'';
+    return `<div class="member-card">
+      ${avatarHtml}
       <div class="mc-info">
         <div class="mc-name">${esc(m.name)}</div>
         <div class="mc-role" style="color:${m.color}99">${esc(m.cargo)}</div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:7px;">
-          <span style="font-size:10px;color:var(--muted);">Acesso:</span>
-          <label class="toggle"><input type="checkbox" ${m.acesso?'checked':''} onchange="toggleAccess('${m.id}',this.checked)"><span class="toggle-slider"></span></label>
-          <span style="font-size:10px;color:${m.acesso?'var(--grn)':'var(--muted)'};">${m.acesso?'Ativo':'Inativo'}</span>
-        </div>
-        <div style="margin-top:4px;font-size:10px;color:var(--muted);">
-          ${P.filter(p=>p.vendedor===m.name).length} projetos ·
-          ${P.filter(p=>p.vendedor===m.name&&p.status==='pending').length} pendentes
+        ${discordTag}
+        <div style="margin-top:5px;display:flex;gap:10px;font-size:10px;color:var(--muted);">
+          <span>📋 ${total} proj.</span>
+          <span style="color:var(--yel)">🕐 ${pen} pend.</span>
+          <span style="color:var(--grn)">✅ ${fin} fin.</span>
         </div>
       </div>
       <div class="mc-actions">
-        <button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')">✕</button>
+        ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')" title="Remover membro">✕</button>`:''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function toggleAccess(id, val){
-  const m=MEMBROS.find(x=>x.id===id);
-  if(m){ m.acesso=val; saveM(); rMembros(); toast(val?'✅ Acesso ativado':'🔒 Acesso removido'); }
+  var m=MEMBROS.find(x=>x.id===id);
+  if(!m)return;
+  sb('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{aprovado:val},function(err){
+    if(!err){m.acesso=val;rMembros();toast(val?'✅ Acesso ativado':'🔒 Acesso removido');}
+    else toast('❌ Erro ao atualizar acesso');
+  });
 }
 function removeMember(id){
-  if(!confirm('Remover este membro?')) return;
-  MEMBROS=MEMBROS.filter(x=>x.id!==id);
-  saveM(); populateSelects(); rMembros(); toast('🗑 Membro removido');
+  if(!confirm('Remover este membro da equipe? O usuário perderá o acesso.')) return;
+  var m=MEMBROS.find(x=>x.id===id);
+  if(!m)return;
+  sb('DELETE','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),null,function(err){
+    if(err){toast('❌ Erro ao remover membro');return;}
+    MEMBROS=MEMBROS.filter(x=>x.id!==id);
+    populateSelects();
+    rMembros();
+    toast('🗑 Membro removido');
+  });
 }
 function openAddMember(){
   ['m-nome','m-emoji','m-cor','m-cargo'].forEach(i=>document.getElementById(i).value='');
@@ -1063,9 +1095,14 @@ function toast(msg){
 
 // ═══ INIT ═══ (called by login system after auth)
 function dashInit(){
-  populateSelects();
   buildCidadeChips();
-  loadP(function(){rdr('solicitacoes');updateProfileStats();});
+  loadMembros(function(){
+    populateSelects();
+    loadP(function(){
+      rdr('solicitacoes');
+      updateProfileStats();
+    });
+  });
 }
 
 

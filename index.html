@@ -566,6 +566,11 @@ select option{background:var(--s2);}
 <div class="toast" id="toast"></div>
 
 <script>
+var UK='_cs_u',SK='_cs_s';
+function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
+function SU(u){localStorage.setItem(UK,JSON.stringify(u));}
+function GS(){try{return JSON.parse(sessionStorage.getItem(SK)||'null');}catch(e){return null;}}
+
 // ═══ CIDADES ═══
 const CIDADES = ['Nobre','Santa','GrandeRP','MaltaRP','Real RP','KNG','Royal','District99','PrimeRP','Boomerang','GoatRP','Maresia','Fronteira','Universo'];
 const CIDADE_COLORS = ['#00c6ff','#22d187','#f59e0b','#ec4899','#a855f7','#06b6d4','#f75454','#34d399','#0077ff','#eab308','#a78bfa','#fc6d26','#ff6b35','#7c3aed'];

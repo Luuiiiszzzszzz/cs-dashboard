@@ -205,6 +205,17 @@ select option{background:var(--s2);}
 
 <!-- ═══ SIDEBAR ═══ -->
 
+
+    <div class="admin-card-sub">Aprove ou remova usuários da equipe CS</div>
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" onclick="adminTab('pending',this)">🕐 Pendentes</button>
+      <button class="admin-tab-btn" onclick="adminTab('approved',this)">✅ Aprovados</button>
+    </div>
+    <div class="ulist" id="admin-ulist"></div>
+    <button class="admin-back-btn" onclick="closeAdmin()">← Voltar ao painel</button>
+  </div>
+</div>
+
 <nav class="sidebar">
   <div class="sb-top">
     <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:2px;">SETORES</div>
@@ -220,7 +231,7 @@ select option{background:var(--s2);}
   </div>
   <div class="sb-sub open" id="sub-equipe-cs">
     <div class="sb-sub-item active" onclick="goPage('solicitacoes')" id="ssi-solicitacoes">
-      <span class="sb-sub-dot"></span>Registros
+      <span class="sb-sub-dot"></span>Solicitações
       <span class="sb-badge" id="nb-sol">0</span>
     </div>
     <div class="sb-sub-item" onclick="goPage('pendentes')" id="ssi-pendentes">
@@ -234,12 +245,12 @@ select option{background:var(--s2);}
   </div>
 
   <!-- Time -->
-  <div class="sb-item" onclick="goPage('solicit-reg')" id="sb-solicit-reg" style="display:none">
+  <div class="sb-item" onclick="goPage('acessos')" id="sb-acessos" style="display:none">
     <div class="sbi-left">
       <span class="sbi-icon">🎟️</span>
       <span>Acessos</span>
     </div>
-    <span class="sb-badge" id="badge-solicit" style="background:#f5c842;color:#000;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800">0</span>
+    <span id="badge-acessos" style="background:#f5c842;color:#000;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:800;display:none">0</span>
   </div>
   <div class="sb-item" onclick="toggleSB(this,'time')" id="sb-time">
     <div class="sbi-left">
@@ -278,61 +289,15 @@ select option{background:var(--s2);}
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="breadcrumb" id="breadcrumb">Equipe CS › <span>Registros</span></div>
+      <div class="breadcrumb" id="breadcrumb">Equipe CS › <span>Solicitações</span></div>
     </div>
     <div class="topbar-right">
       <div class="tb-notif">🔔</div>
-      <div class="tb-user" id="tb-user-btn" onclick="toggleProfile()" style="position:relative;cursor:pointer;">
-        <div class="tb-avatar" id="tb-av-el">MC</div>
+      <div class="tb-user">
+        <div class="tb-avatar">MC</div>
         <div>
-          <div class="tb-username tb-nm" id="tb-nm-el">Migue CS</div>
-          <div class="tb-email tb-em" id="tb-em-el">equipe@cs.com</div>
-        </div>
-      </div>
-      <!-- Profile Popup -->
-      <div id="profile-popup" style="display:none;position:absolute;top:60px;right:24px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:20px;width:280px;z-index:9000;box-shadow:0 8px 32px rgba(0,0,0,.5)">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #1e2d45">
-          <div id="pp-av" style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">MC</div>
-          <div>
-            <div id="pp-nm" style="font-size:15px;font-weight:800;color:#d8e8ff">Admin</div>
-            <div id="pp-role" style="font-size:11px;color:#4a6080">Equipe CS</div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-          <div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px">Cidade que atende</div>
-            <div id="pp-city" style="font-size:13px;color:#d8e8ff;font-weight:600">—</div>
-          </div>
-          <div>
-            <div style="font-size:9px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:3px">Discord ID</div>
-            <div id="pp-discord" style="font-size:13px;color:#d8e8ff;font-weight:600;font-family:monospace">—</div>
-          </div>
-        </div>
-        <button id="pp-edit-btn" onclick="editProfile()" style="width:100%;padding:8px;border-radius:8px;background:#1e2d45;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #2a3d55;cursor:pointer;margin-bottom:6px;display:none">✏️ Editar perfil do membro</button>
-        <button onclick="sessionStorage.removeItem('_cs_s');location.reload()" style="width:100%;padding:8px;border-radius:8px;background:transparent;color:#f75454;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;border:1px solid #f7545440;cursor:pointer">⏻ Sair</button>
-      </div>
-      <!-- Edit Profile Modal -->
-      <div id="edit-profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center">
-        <div style="background:#0f1420;border:1px solid #1e2d45;border-radius:18px;padding:28px 32px;width:380px;max-width:95vw">
-          <div style="font-size:16px;font-weight:800;color:#d8e8ff;margin-bottom:10px">✏️ Editar Perfil do Membro</div><div style="font-size:11px;color:#4a6080;margin-bottom:16px">Somente o administrador pode definir cidade e Discord ID</div>
-          <div style="margin-bottom:12px">
-            <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px">Cidade que atende</label>
-            <select id="ep-city" style="width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 13px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;outline:none">
-              <option value="">Selecione...</option>
-              <option>Nobre</option><option>Santa</option><option>GrandeRP</option><option>MaltaRP</option>
-              <option>Real RP</option><option>KNG</option><option>Royal</option><option>District99</option>
-              <option>PrimeRP</option><option>Boomerang</option><option>GoatRP</option><option>Maresia</option>
-              <option>Fronteira</option><option>Universo</option>
-            </select>
-          </div>
-          <div style="margin-bottom:16px">
-            <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px">Discord ID</label>
-            <input id="ep-discord" placeholder="Ex: 123456789012345678" style="width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 13px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;outline:none;box-sizing:border-box">
-          </div>
-          <div style="display:flex;gap:8px">
-            <button onclick="saveProfile()" style="flex:1;padding:10px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">Salvar</button>
-            <button onclick="document.getElementById('edit-profile-modal').style.display='none'" style="flex:1;padding:10px;border-radius:9px;background:transparent;color:#4a6080;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #1e2d45;cursor:pointer">Cancelar</button>
-          </div>
+          <div class="tb-username">Migue CS</div>
+          <div class="tb-email">equipe@cs.com</div>
         </div>
       </div>
     </div>
@@ -344,7 +309,7 @@ select option{background:var(--s2);}
     <div class="page active" id="page-solicitacoes">
       <div class="page-hdr">
         <div>
-          <div class="page-title">🎟️ Acessos</div>
+          <div class="page-title">📋 Solicitações</div>
           <div class="page-sub">Todos os projetos registrados pela Equipe CS</div>
         </div>
         <div class="hdr-right">
@@ -426,14 +391,14 @@ select option{background:var(--s2);}
     </div>
 
     <!-- ═══ MEMBROS ═══ -->
-    <div class="page" id="page-solicit-reg">
+    <div class="page" id="page-acessos">
       <div class="page-hdr">
         <div>
           <div class="page-title">🎟️ Acessos</div>
           <div class="page-sub">Gere códigos de convite e gerencie membros da equipe</div>
         </div>
       </div>
-      <div id="solicit-list" style="display:flex;flex-direction:column;gap:12px;margin-top:8px;padding-bottom:40px"></div>
+      <div id="acessos-content" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
     </div>
 
     <div class="page" id="page-membros">
@@ -566,29 +531,6 @@ select option{background:var(--s2);}
 <div class="toast" id="toast"></div>
 
 <script>
-
-// ── Supabase helper (fetch with proper CORS) ──
-var _SBU='https://lomtwfoccessejcywail.supabase.co',_SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
-function sbReq(method,path,body,cb){
-  fetch(_SBU+'/rest/v1/'+path,{
-    method:method,
-    headers:{
-      'apikey':_SBK,
-      'Authorization':'Bearer '+_SBK,
-      'Content-Type':'application/json',
-      'Prefer':'return=representation'
-    },
-    body:body?JSON.stringify(body):undefined
-  })
-  .then(function(r){return r.text();})
-  .then(function(t){try{cb(null,JSON.parse(t));}catch(e){cb(null,[]);}})
-  .catch(function(e){console.error('sbReq error:',e);if(cb)cb(e,[]);});
-}
-var UK='_cs_u',SK='_cs_s';
-function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
-function SU(u){localStorage.setItem(UK,JSON.stringify(u));}
-function GS(){try{return JSON.parse(sessionStorage.getItem(SK)||'null');}catch(e){return null;}}
-
 // ═══ CIDADES ═══
 const CIDADES = ['Nobre','Santa','GrandeRP','MaltaRP','Real RP','KNG','Royal','District99','PrimeRP','Boomerang','GoatRP','Maresia','Fronteira','Universo'];
 const CIDADE_COLORS = ['#00c6ff','#22d187','#f59e0b','#ec4899','#a855f7','#06b6d4','#f75454','#34d399','#0077ff','#eab308','#a78bfa','#fc6d26','#ff6b35','#7c3aed'];
@@ -642,7 +584,7 @@ function toggleSB(el, subId){
 
 // ═══ NAVEGAÇÃO ═══
 const PAGE_META = {
-  'solicitacoes':{ bc:'Equipe CS › <span>Registros</span>', sb:'equipe-cs', ssi:'solicitacoes' },
+  'solicitacoes':{ bc:'Equipe CS › <span>Solicitações</span>', sb:'equipe-cs', ssi:'solicitacoes' },
   'pendentes':   { bc:'Equipe CS › <span>Pendentes</span>',    sb:'equipe-cs', ssi:'pendentes' },
   'finalizados': { bc:'Equipe CS › <span>Finalizados</span>',  sb:'equipe-cs', ssi:'finalizados' },
   'membros':     { bc:'Time › <span>Membros</span>',           sb:'time',      ssi:'membros' },
@@ -653,7 +595,7 @@ function goPage(id){
   curPage=id;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-sub-item').forEach(i=>i.classList.remove('active'));
-  if(id==='solicit-reg')renderSolicitReg();
+  if(id==='acessos')renderAcessos();
   const pg=document.getElementById('page-'+id);
   if(pg) pg.classList.add('active');
   const ssi=document.getElementById('ssi-'+id);
@@ -752,40 +694,6 @@ function getFilters(k){
 }
 
 // ═══ RENDER PAGES ═══
-function renderSolicitReg(){
-  var list=document.getElementById('solicit-list');
-  var us=GU().filter(function(x){return x.pendente;});
-  var badge=document.getElementById('badge-solicit');
-  if(badge)badge.textContent=us.length;
-  if(!us.length){
-    list.innerHTML='<div style="text-align:center;padding:48px;color:#4a6080"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:14px;font-weight:600">Nenhuma registro pendente</div></div>';
-    return;
-  }
-  list.innerHTML=us.map(function(u){
-    return '<div style="background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px">'
-      +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
-      +'<div style="flex:1">'
-      +'<div style="font-size:15px;font-weight:700;color:#d8e8ff;margin-bottom:2px">'+u.usuario+'</div>'
-      +'<div style="font-size:12px;color:#4a6080">Equipe CS · Aguardando aprovação</div>'
-      +'</div>'
-      +'<div style="display:flex;gap:8px">'
-      +'<button onclick="aprovSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:linear-gradient(135deg,#22d187,#0fa868);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ Aprovar</button>'
-      +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
-      +'</div>'
-      +'</div>';
-  }).join('');
-}
-
-function aprovSolicit(id){
-  var us=GU();var u=us.find(function(x){return x.id===id;});
-  if(u){delete u.pendente;SU(us);renderSolicitReg();}
-}
-function rejSolicit(id){
-  if(!confirm('Recusar e remover este usuário?'))return;
-  SU(GU().filter(function(x){return x.id!==id;}));
-  renderSolicitReg();
-}
-
 function rdr(id){
   updBadges();
   if(id==='solicitacoes') rSol();
@@ -1030,117 +938,17 @@ function toast(msg){
   document.getElementById(id).addEventListener('click',e=>{ if(e.target===e.currentTarget) closeModal(id); });
 });
 
-// ═══ SOLICIT REG PAGE ═══
-function renderSolicitReg(){
-  var list=document.getElementById('solicit-list');
-  if(!list)return;
-  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
-  var users=GU().filter(function(u){return u.role!=='Administrador';});
-  var badge=document.getElementById('badge-solicit');
-  if(badge)badge.textContent=codes.filter(function(c){return !c.used;}).length||'0';
-  var html='';
-  // Section: Generate new code
-  html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
-  html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:4px">🎟️ Gerar Código de Convite</div>';
-  html+='<div style="font-size:12px;color:var(--muted);margin-bottom:16px">Gere um código e envie pelo Discord para a pessoa entrar.</div>';
-  html+='<button onclick="gerarCodigo()" style="padding:10px 20px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">＋ Gerar Novo Código</button>';
-  html+='<div id="novo-codigo" style="margin-top:14px"></div>';
-  html+='</div>';
-  // Section: Active codes
-  var ativos=codes.filter(function(c){return !c.used;});
-  if(ativos.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">⏳ Códigos Ativos ('+ativos.length+')</div>';
-    ativos.forEach(function(c){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
-      html+='<div style="flex:1;font-family:monospace;font-size:15px;font-weight:800;color:#00c6ff;letter-spacing:2px">'+c.code+'</div>';
-      html+='<div style="font-size:10px;color:var(--muted)">Criado: '+new Date(c.created).toLocaleDateString('pt-BR')+'</div>';
-      html+='<button onclick="copiarCodigo(''+c.code+'')" style="padding:5px 12px;border-radius:7px;background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copiar</button>';
-      html+='<button onclick="deletarCodigo(''+c.code+'')" style="padding:5px 10px;border-radius:7px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:11px;cursor:pointer">✕</button>';
-      html+='</div>';
-    });
-    html+='</div>';
-  }
-  // Section: Used codes
-  var usados=codes.filter(function(c){return c.used;});
-  if(usados.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:8px">';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">✅ Códigos Utilizados ('+usados.length+')</div>';
-    usados.forEach(function(c){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
-      html+='<div style="flex:1;font-family:monospace;font-size:13px;color:#4a6080;text-decoration:line-through">'+c.code+'</div>';
-      html+='<div style="font-size:11px;color:#22d187;font-weight:600">Usado por: '+c.usedBy+'</div>';
-      html+='</div>';
-    });
-    html+='</div>';
-  }
-  // Section: Users
-  if(users.length){
-    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
-    html+='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:12px">👥 Membros cadastrados ('+users.length+')</div>';
-    users.forEach(function(u){
-      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
-      html+='<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000">'+u.usuario.substring(0,2).toUpperCase()+'</div>';
-      html+='<div style="flex:1;font-size:13px;font-weight:600;color:var(--txt)">'+u.usuario+'</div>';
-      html+='<div style="font-size:11px;color:var(--muted)">'+u.role+'</div>';
-      html+='<button onclick="ADEL('+u.id+')" style="padding:4px 10px;border-radius:6px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif">✕ Remover</button>';
-      html+='</div>';
-    });
-    html+='</div>';
-  }
-  list.innerHTML=html;
-  list.innerHTML=us.map(function(u){
-    return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
-      +'<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
-      +'<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--txt)">'+u.usuario+'</div>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:2px">Aguardando aprovação do administrador</div></div>'
-      +'<div style="display:flex;gap:8px">'
-      +'<button onclick="aprovSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:linear-gradient(135deg,#22d187,#0fa868);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ Aprovar</button>'
-      +'<button onclick="rejSolicit('+u.id+')" style="padding:9px 18px;border-radius:9px;background:#f7545415;color:#f75454;font-family:Outfit,sans-serif;font-size:13px;font-weight:700;border:1px solid #f7545440;cursor:pointer">✕ Recusar</button>'
-      +'</div></div>';
-  }).join('');
-}
-function gerarCodigo(){
-  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var code='';
-  for(var i=0;i<8;i++)code+=chars[Math.floor(Math.random()*chars.length)];
-  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
-  codes.push({code:code,created:Date.now(),used:false,usedBy:null});
-  localStorage.setItem('_cs_codes',JSON.stringify(codes));
-  var div=document.getElementById('novo-codigo');
-  if(div){
-    div.innerHTML='<div style="background:#00c6ff15;border:1px solid #00c6ff40;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px">'
-      +'<div style="font-family:monospace;font-size:22px;font-weight:900;color:#00c6ff;letter-spacing:3px">'+code+'</div>'
-      +'<button onclick="copiarCodigo(''+code+'')" style="padding:7px 14px;border-radius:7px;background:#00c6ff;color:#000;border:none;font-family:Outfit,sans-serif;font-size:12px;font-weight:800;cursor:pointer">📋 Copiar</button>'
-      +'</div>';
-  }
-  renderSolicitReg();
-}
-function copiarCodigo(code){
-  navigator.clipboard.writeText(code).then(function(){
-    alert('Código copiado: '+code+'
-Envie pelo Discord!');
-  });
-}
-function deletarCodigo(code){
-  if(!confirm('Deletar código '+code+'?'))return;
-  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
-  localStorage.setItem('_cs_codes',JSON.stringify(codes.filter(function(c){return c.code!==code;})));
-  renderSolicitReg();
-}
-
 // ═══ INIT ═══ (called by login system after auth)
 function dashInit(){
-  try{populateSelects();}catch(e){}
-  try{buildCidadeChips();}catch(e){}
-  try{rdr('solicitacoes');}catch(e){}
+  populateSelects();
+  buildCidadeChips();
+  rdr('solicitacoes');
 }
 
 
   
 </script>
-</body>
-</html>
+
 <!-- LOGIN -->
 
 <style>
@@ -1166,11 +974,6 @@ function dashInit(){
 .LERR{background:#f7545415;border:1px solid #f7545440;color:#f75454;display:block}
 .LOK{background:#22d18715;border:1px solid #22d18740;color:#22d187;display:block}
 .LHT{font-size:11px;color:#4a6080;text-align:center;margin-top:14px;line-height:1.6}
-#AD{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999998;display:none;align-items:center;justify-content:center;font-family:'Outfit',sans-serif}
-#AD.ON{display:flex}
-.AC{background:#0f1420;border:1px solid #1e2d45;border-radius:18px;padding:30px 34px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto}
-.AIN{width:100%;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:9px 12px;color:#d8e8ff;font-family:'Outfit',sans-serif;font-size:12px;outline:none;box-sizing:border-box;margin-bottom:8px}
-.AIN:focus{border-color:#00c6ff}
 </style>
 
 <div id="LG">
@@ -1192,38 +995,27 @@ function dashInit(){
    <div class="LMG" id="LMI"></div>
   </div>
   <div id="LPR" style="display:none">
-   <div class="LFD"><label class="LLB">Código de Convite</label><input class="LIN" id="LRC" placeholder="Cole o código aqui..."></div>
+   <div class="LFD"><label class="LLB">Código de Convite</label><input class="LIN" id="LRC" placeholder="Ex: XK7M2PQR"></div>
    <div class="LFD"><label class="LLB">Escolha seu Usuário</label><input class="LIN" id="LRU" placeholder="Ex: mel, migue..."></div>
    <div class="LFD"><label class="LLB">Crie sua Senha</label>
     <div class="LPW"><input class="LIN E" type="password" id="LRP" placeholder="Mínimo 4 caracteres">
     <button class="LEYE" type="button" onclick="var e=document.getElementById('LRP');e.type=e.type=='password'?'text':'password';this.textContent=e.type=='password'?'👁️':'🙈'">👁️</button></div>
    </div>
-   <button class="LBT" onclick="LREG()">Entrar com Código</button>
+   <button class="LBT" onclick="LREG()">Criar Conta</button>
    <div class="LMG" id="LMR"></div>
    <div class="LHT">Peça um código de convite ao administrador pelo Discord.</div>
   </div>
  </div>
 </div>
 
-<div id="AD">
- <div class="AC">
-  <div style="font-size:17px;font-weight:800;color:#d8e8ff;margin-bottom:3px">⚙️ Gerenciar Acessos</div>
-  <div style="font-size:11px;color:#4a6080;margin-bottom:18px">Adicione ou remova membros da equipe</div>
-  <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:6px">Novo usuário</label>
-  <input class="AIN" id="A-U" placeholder="Nome de usuário (ex: mel)">
-  <input class="AIN" id="A-P" type="password" placeholder="Senha">
-  <button class="LBT" style="margin-bottom:18px" onclick="AADD()">＋ Adicionar usuário</button>
-  <label style="display:block;font-size:10px;font-weight:700;color:#4a6080;letter-spacing:.7px;text-transform:uppercase;margin-bottom:8px">Usuários cadastrados</label>
-  <div id="ADL" style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px"></div>
-  <button onclick="document.getElementById('AD').classList.remove('ON')" style="background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:7px 16px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600">← Voltar ao painel</button>
- </div>
-</div>
-
 <script>
-var UK='_cs_u',SK='_cs_s';
+var UK='_cs_u',SK='_cs_s',CK='_cs_codes';
 function GU(){try{return JSON.parse(localStorage.getItem(UK)||'[]');}catch(e){return [];}}
 function SU(u){localStorage.setItem(UK,JSON.stringify(u));}
-function GS(){try{return JSON.parse(sessionStorage.getItem(SK)||'null');}catch(e){return null;}}
+function GC(){try{return JSON.parse(localStorage.getItem(CK)||'[]');}catch(e){return [];}}
+function SC(c){localStorage.setItem(CK,JSON.stringify(c));}
+
+// Default admin
 if(!GU().length){SU([{id:1,usuario:'admin',senha:'admin123',role:'Administrador'}]);}
 
 function LSW(t){
@@ -1238,7 +1030,7 @@ function LLOG(){
   var u=document.getElementById('LU').value.trim().toLowerCase();
   var p=document.getElementById('LP').value;
   if(!u||!p){LM('LMI','Preencha usuário e senha.','ERR');return;}
-  var f=GU().find(function(x){return x.usuario===u&&x.senha===p&&!x.pendente;});
+  var f=GU().find(function(x){return x.usuario===u&&x.senha===p;});
   if(!f){LM('LMI','Usuário ou senha incorretos.','ERR');return;}
   sessionStorage.setItem(SK,JSON.stringify(f));
   LINIT(f);
@@ -1251,128 +1043,129 @@ function LREG(){
   if(!code){LM('LMR','Digite o código de convite.','ERR');return;}
   if(!u||!p){LM('LMR','Preencha todos os campos.','ERR');return;}
   if(p.length<4){LM('LMR','Senha muito curta (mín. 4).','ERR');return;}
-  // Validate code
-  var codes=JSON.parse(localStorage.getItem('_cs_codes')||'[]');
-  var validCode=codes.find(function(c){return c.code===code&&!c.used;});
-  if(!validCode){LM('LMR','Código inválido ou já utilizado.','ERR');return;}
+  var codes=GC();
+  var valid=codes.find(function(c){return c.code===code&&!c.used;});
+  if(!valid){LM('LMR','Código inválido ou já utilizado.','ERR');return;}
   var us=GU();
-  if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe. Escolha outro nome.','ERR');return;}
-  // Mark code as used
-  validCode.used=true;
-  validCode.usedBy=u;
-  localStorage.setItem('_cs_codes',JSON.stringify(codes));
-  // Create user
+  if(us.find(function(x){return x.usuario===u;})){LM('LMR','Usuário já existe. Escolha outro.','ERR');return;}
+  valid.used=true;valid.usedBy=u;SC(codes);
   us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS'});
   SU(us);
-  LM('LMR','✅ Conta criada! Clique em Entrar e faça login.','OK');
-  setTimeout(function(){LSW('in');document.getElementById('LU').value=u;},2000);
-  ['LRC','LRU','LRP'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});
+  LM('LMR','✅ Conta criada! Clique em Entrar.','OK');
+  setTimeout(function(){LSW('in');var el=document.getElementById('LU');if(el)el.value=u;},2000);
 }
 
 function LINIT(usr){
   document.getElementById('LG').style.display='none';
-  var nm=document.getElementById('tb-nm-el');if(nm)nm.textContent=usr.usuario;
-  var av=document.getElementById('tb-av-el');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
-  var em=document.getElementById('tb-em-el');if(em)em.textContent=usr.role;
-  // Load profile data
-  var prof=JSON.parse(localStorage.getItem('_cs_prof_'+usr.usuario)||'{}');
-  document.getElementById('pp-nm').textContent=usr.usuario;
-  document.getElementById('pp-av').textContent=usr.usuario.substring(0,2).toUpperCase();
-  document.getElementById('pp-role').textContent=usr.role;
-  document.getElementById('pp-city').textContent=prof.city||'Não definida';
-  document.getElementById('pp-discord').textContent=prof.discord||'Não definido';
-  var tb=document.querySelector('.topbar-r,.tb-r');
-  if(tb&&usr.role==='Administrador'&&!document.getElementById('_AB')){
-    var b=document.createElement('button');b.id='_AB';b.textContent='⚙️ Acessos';
-    b.style.cssText='background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
-    b.onclick=function(){document.getElementById('AD').classList.add('ON');ADLOAD();};
-    tb.appendChild(b);
-  }
-  if(tb&&!document.getElementById('_LB')){
-    var b2=document.createElement('button');b2.id='_LB';b2.textContent='⏻ Sair';
-    b2.style.cssText='background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;';
-    b2.onclick=function(){sessionStorage.removeItem(SK);location.reload();};
-    tb.appendChild(b2);
+  var nm=document.querySelector('#tb-nm-el,.tb-username');if(nm)nm.textContent=usr.usuario;
+  var av=document.querySelector('#tb-av-el,.tb-avatar');if(av)av.textContent=usr.usuario.substring(0,2).toUpperCase();
+  var em=document.querySelector('#tb-em-el,.tb-email');if(em)em.textContent=usr.role;
+  if(usr.role==='Administrador'){
+    var sb=document.getElementById('sb-acessos');if(sb)sb.style.display='flex';
   }
   if(typeof dashInit==='function')dashInit();
-  // Show solicit nav for admin
-  if(usr.role==='Administrador'){
-    var navSolicit=document.getElementById('nav-solicit-reg');
-    if(navSolicit)navSolicit.style.display='flex';
-    var pend=GU().filter(function(x){return x.pendente;}).length;
-    var badge=document.getElementById('badge-solicit');
-    if(badge)badge.textContent=pend||'0';
-    var sbSolicit=document.getElementById('sb-solicit-reg');
-    if(sbSolicit)sbSolicit.style.display='flex';
-    var editBtn=document.getElementById('pp-edit-btn');
-    if(editBtn)editBtn.style.display='block';
-  }
 }
 
-function ADLOAD(){
-  var list=document.getElementById('ADL');var us=GU();
-  if(!us.length){list.innerHTML='<div style="color:#4a6080;font-size:12px;padding:8px">Nenhum usuário.</div>';return;}
-  list.innerHTML=us.map(function(u){
-    return '<div style="display:flex;align-items:center;gap:8px;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:9px 12px">'
-      +'<div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>'
-      +'<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#d8e8ff">'+u.usuario+(u.pendente?' <span style="color:#f5c842;font-size:9px">[pendente]</span>':'')+'</div><div style="font-size:10px;color:#4a6080">'+u.role+'</div></div>'
-      +(u.pendente?'<button onclick="AAPV('+u.id+')" style="background:#22d18718;color:#22d187;border:1px solid #22d18740;border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700">✅ Aprovar</button>':'')
-      +(u.role!=='Administrador'?'<button onclick="ADEL('+u.id+')" style="background:transparent;color:#4a6080;border:1px solid #1e2d45;border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif;margin-left:4px">✕</button>':'')
+// ── Acessos page ──
+function renderAcessos(){
+  var el=document.getElementById('acessos-content');
+  if(!el)return;
+  var codes=GC();
+  var users=GU().filter(function(u){return u.role!=='Administrador';});
+  var ativos=codes.filter(function(c){return !c.used;});
+  var usados=codes.filter(function(c){return c.used;});
+  var html='';
+
+  // Generate code section
+  html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+  html+='<div style="font-size:15px;font-weight:700;color:var(--txt);margin-bottom:4px">🎟️ Gerar Código de Convite</div>';
+  html+='<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Gere um código único e envie pelo Discord para o membro entrar.</div>';
+  html+='<button onclick="gerarCodigo()" style="padding:10px 22px;border-radius:9px;background:linear-gradient(135deg,#00c6ff,#0077ff);color:#000;font-family:Outfit,sans-serif;font-size:13px;font-weight:800;border:none;cursor:pointer">＋ Gerar Código</button>';
+  html+='<div id="novo-cod" style="margin-top:14px"></div>';
+  html+='</div>';
+
+  // Active codes
+  if(ativos.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">⏳ Códigos Ativos ('+ativos.length+')</div>';
+    ativos.forEach(function(c){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:7px">';
+      html+='<div style="flex:1;font-family:monospace;font-size:16px;font-weight:900;color:#00c6ff;letter-spacing:3px">'+c.code+'</div>';
+      html+='<button onclick="copCod(\''+c.code+'\')" style="padding:5px 12px;border-radius:7px;background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;cursor:pointer">📋 Copiar</button>';
+      html+='<button onclick="delCod(\''+c.code+'\')" style="padding:5px 10px;border-radius:7px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:11px;cursor:pointer">✕</button>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  // Used codes
+  if(usados.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">✅ Códigos Usados ('+usados.length+')</div>';
+    usados.forEach(function(c){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:9px 14px;margin-bottom:6px">';
+      html+='<div style="flex:1;font-family:monospace;font-size:13px;color:#4a6080;text-decoration:line-through">'+c.code+'</div>';
+      html+='<div style="font-size:11px;color:#22d187;font-weight:600">→ '+c.usedBy+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  // Members
+  if(users.length){
+    html+='<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px 24px">';
+    html+='<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:12px">👥 Membros ('+users.length+')</div>';
+    users.forEach(function(u){
+      html+='<div style="display:flex;align-items:center;gap:10px;background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:10px 14px;margin-bottom:6px">';
+      html+='<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00c6ff,#0077ff);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#000;flex-shrink:0">'+u.usuario.substring(0,2).toUpperCase()+'</div>';
+      html+='<div style="flex:1;font-size:13px;font-weight:600;color:var(--txt)">'+u.usuario+'</div>';
+      html+='<div style="font-size:11px;color:var(--muted)">'+u.role+'</div>';
+      html+='<button onclick="remMembro('+u.id+')" style="padding:4px 10px;border-radius:6px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-size:10px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600">✕ Remover</button>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  el.innerHTML=html;
+}
+
+function gerarCodigo(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var code='';for(var i=0;i<8;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+  var codes=GC();
+  codes.push({code:code,created:Date.now(),used:false,usedBy:null});
+  SC(codes);
+  var div=document.getElementById('novo-cod');
+  if(div){
+    div.innerHTML='<div style="background:#00c6ff15;border:2px solid #00c6ff40;border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-top:4px">'
+      +'<div style="font-family:monospace;font-size:24px;font-weight:900;color:#00c6ff;letter-spacing:4px">'+code+'</div>'
+      +'<button onclick="copCod(\''+code+'\')" style="padding:8px 16px;border-radius:8px;background:#00c6ff;color:#000;border:none;font-family:Outfit,sans-serif;font-size:12px;font-weight:800;cursor:pointer">📋 Copiar</button>'
       +'</div>';
-  }).join('');
-}
-function AADD(){
-  var u=document.getElementById('A-U').value.trim().toLowerCase();
-  var p=document.getElementById('A-P').value;
-  if(!u||!p){alert('Preencha usuário e senha.');return;}
-  var us=GU();
-  if(us.find(function(x){return x.usuario===u;})){alert('Usuário já existe.');return;}
-  us.push({id:Date.now(),usuario:u,senha:p,role:'Equipe CS'});
-  SU(us);document.getElementById('A-U').value='';document.getElementById('A-P').value='';ADLOAD();
-}
-function AAPV(id){var us=GU();var u=us.find(function(x){return x.id===id;});if(u){delete u.pendente;SU(us);ADLOAD();}}
-function ADEL(id){if(!confirm('Remover?'))return;SU(GU().filter(function(x){return x.id!==id;}));ADLOAD();}
-
-document.addEventListener('keydown',function(e){
-  if(e.key!=='Enter')return;
-  var lg=document.getElementById('LG');if(!lg||lg.style.display==='none')return;
-  document.getElementById('LPR').style.display!=='none'?LREG():LLOG();
-});
-
-var s=GS();
-if(s&&!s.pendente){LINIT(s);}
-else{document.getElementById('LG').style.display='flex';}
-
-function toggleProfile(){
-  var p=document.getElementById('profile-popup');
-  p.style.display=p.style.display==='none'?'block':'none';
-}
-document.addEventListener('click',function(e){
-  var btn=document.getElementById('tb-user-btn');
-  var popup=document.getElementById('profile-popup');
-  if(popup&&btn&&!btn.contains(e.target)&&!popup.contains(e.target)){
-    popup.style.display='none';
   }
-});
-function editProfile(){
-  document.getElementById('profile-popup').style.display='none';
-  var s=JSON.parse(sessionStorage.getItem('_cs_s')||'{}');
-  var prof=JSON.parse(localStorage.getItem('_cs_prof_'+s.usuario)||'{}');
-  document.getElementById('ep-city').value=prof.city||'';
-  document.getElementById('ep-discord').value=prof.discord||'';
-  document.getElementById('edit-profile-modal').style.display='flex';
-}
-function saveProfile(){
-  var s=JSON.parse(sessionStorage.getItem('_cs_s')||'{}');
-  var city=document.getElementById('ep-city').value;
-  var discord=document.getElementById('ep-discord').value.trim();
-  localStorage.setItem('_cs_prof_'+s.usuario,JSON.stringify({city:city,discord:discord}));
-  document.getElementById('pp-city').textContent=city||'Não definida';
-  document.getElementById('pp-discord').textContent=discord||'Não definido';
-  document.getElementById('edit-profile-modal').style.display='none';
+  renderAcessos();
 }
 
+function copCod(code){
+  navigator.clipboard.writeText(code).catch(function(){});
+  alert('Código copiado: '+code+'\n\nEnvie pelo Discord para o membro!');
+}
+
+function delCod(code){
+  if(!confirm('Deletar código '+code+'?'))return;
+  SC(GC().filter(function(c){return c.code!==code;}));
+  renderAcessos();
+}
+
+function remMembro(id){
+  if(!confirm('Remover este membro?'))return;
+  SU(GU().filter(function(u){return u.id!==id;}));
+  renderAcessos();
+}
+
+// Init
+var s=sessionStorage.getItem(SK);
+if(s){try{var _u=JSON.parse(s);if(_u)LINIT(_u);}catch(e){}}
+else{document.getElementById('LG').style.display='flex';}
 </script>
-
 </body>
 </html>

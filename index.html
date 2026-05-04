@@ -970,11 +970,26 @@ function toast(msg){
 
 // ═══ INIT ═══
 var _currentUser=null;
+function updPerfil(){
+  if(!_currentUser||typeof P==='undefined')return;
+  var nome=_currentUser.usuario;
+  var isAdmin=_currentUser.role==='Administrador';
+  var meus=isAdmin?P:P.filter(function(p){return p.vendedor===nome;});
+  var pen=meus.filter(function(p){return p.status==='pending';}).length;
+  var fin=meus.filter(function(p){return p.status==='done';}).length;
+  var vol=meus.reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+  var et=document.getElementById('_pmT');if(et)et.textContent=meus.length;
+  var ep=document.getElementById('_pmP');if(ep)ep.textContent=pen;
+  var ef=document.getElementById('_pmF');if(ef)ef.textContent=fin;
+  var ev=document.getElementById('_pmV');if(ev)ev.textContent=vol>=1000?'R$'+(vol/1000).toFixed(1)+'k':'R$'+Math.round(vol);
+}
+
 function dashInit(){
   try{buildCidadeChips();}catch(e){}
   try{populateSelects();}catch(e){}
   loadP(function(){
     try{rdr('solicitacoes');}catch(e){}
+    try{updPerfil();}catch(e){}
     // Carrega membros em background sem bloquear
     sbp('GET','cs_usuarios','select=usuario,role,discord_avatar,discord_username&aprovado=eq.true&order=usuario.asc',null,function(err,users){
       if(!err&&users&&users.length){
@@ -1151,15 +1166,21 @@ function LINIT(usr){
     var menu=document.createElement('div');
     menu.id='_PM';
     menu.style.cssText='display:none;position:fixed;top:58px;right:20px;background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:16px;z-index:500;min-width:240px;box-shadow:0 8px 32px #00000080;';
-    menu.innerHTML='<div style="font-size:14px;font-weight:800;color:#d8e8ff;margin-bottom:4px" id="_pmName">'+usr.usuario+'</div>'
-      +'<div style="font-size:11px;color:#4a6080;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #1e2d45">'+usr.role+'</div>'
-      +'<div id="_pmDiscord" style="margin-bottom:10px"></div>'
+    menu.innerHTML='<div style="font-size:14px;font-weight:800;color:#d8e8ff;margin-bottom:2px" id="_pmName">'+usr.usuario+'</div>'
+      +'<div style="font-size:11px;color:#4a6080;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2d45">'+usr.role+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;">'
+      +'<div style="background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:8px;text-align:center;"><div id="_pmT" style="font-size:20px;font-weight:900;color:#00c6ff;">-</div><div style="font-size:9px;color:#4a6080;text-transform:uppercase;letter-spacing:.5px;">Projetos</div></div>'
+      +'<div style="background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:8px;text-align:center;"><div id="_pmP" style="font-size:20px;font-weight:900;color:#f5c842;">-</div><div style="font-size:9px;color:#4a6080;text-transform:uppercase;letter-spacing:.5px;">Pendentes</div></div>'
+      +'<div style="background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:8px;text-align:center;"><div id="_pmF" style="font-size:20px;font-weight:900;color:#22d187;">-</div><div style="font-size:9px;color:#4a6080;text-transform:uppercase;letter-spacing:.5px;">Finalizados</div></div>'
+      +'<div style="background:#080b10;border:1px solid #1e2d45;border-radius:9px;padding:8px;text-align:center;"><div id="_pmV" style="font-size:13px;font-weight:900;color:#a855f7;">R$0</div><div style="font-size:9px;color:#4a6080;text-transform:uppercase;letter-spacing:.5px;">Volume</div></div>'
+      +'</div>'
+      +'<div id="_pmDiscord" style="margin-bottom:8px"></div>'
       +'<button id="_pmDBtn" onclick="vincularDiscord()" style="width:100%;padding:9px;border-radius:9px;background:#5865f220;color:#5865f2;border:1px solid #5865f240;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;">🎮 Vincular Discord</button>'
       +'<button onclick="sessionStorage.clear();location.reload()" style="width:100%;padding:9px;border-radius:9px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⏻ Sair</button>';
     document.body.appendChild(menu);
     // Abrir/fechar ao clicar no avatar
     document.querySelector('.tb-user').style.cursor='pointer';
-    document.querySelector('.tb-user').onclick=function(){menu.style.display=menu.style.display==='none'?'block':'none';};
+    document.querySelector('.tb-user').onclick=function(){menu.style.display=menu.style.display==='none'?'block':'none';try{updPerfil();}catch(e){};};
     document.addEventListener('click',function(e){
       if(!menu.contains(e.target)&&!document.querySelector('.tb-user').contains(e.target))menu.style.display='none';
     });

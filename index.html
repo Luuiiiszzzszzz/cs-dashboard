@@ -1061,15 +1061,37 @@ function setRfCidade(val,el){
 }
 
 // ═══ ACTIONS ═══
+
+// ─── LOG PARA O DISCORD ─────────────────────────────────────────────
+var DISCORD_WEBHOOK_URL = '';  // Preenchido dinamicamente via BOT_URL
+var DISCORD_WEBHOOK_SECRET = 'cs-posvenda-secret';
+
+function sendDiscordLog(acao, projeto) {
+  var botUrl = (window._BOT_URL || '').replace(/\/+$/, '');
+  if (!botUrl) return;
+  var payload = {
+    acao: acao,
+    projeto: projeto,
+    usuario: (_currentUser && _currentUser.usuario) ? _currentUser.usuario : 'Dashboard'
+  };
+  fetch(botUrl + '/webhook', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Webhook-Secret': DISCORD_WEBHOOK_SECRET
+    },
+    body: JSON.stringify(payload)
+  }).catch(function(e){ console.warn('[Discord Log]', e); });
+}
+
 function finish(id){
   if(!confirm('Finalizar este projeto?'))return;
   sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
     if(err){toast('Erro ao finalizar');return;}
-    // Usa == para comparar corretamente número vs string
     var p=P.find(function(x){return x.id==id;});
     if(p) p.status='done';
-    toast('✅ Projeto finalizado!');
-    // Recarrega do Supabase para garantir consistência
+    toast('\u2705 Projeto finalizado!');
+    sendDiscordLog('finalizado', p || {id:id});
     loadP(function(){
       updBadges();
       populateSelects();
@@ -1083,13 +1105,14 @@ function del(id){
   if(!confirm('Tem certeza que deseja remover "'+nome+'"? Esta ação não pode ser desfeita.'))return;
   sbp('DELETE','projetos','id=eq.'+id,null,function(err){
     if(err){toast('Erro ao remover');return;}
+    sendDiscordLog('removido', p || {id:id, nome:nome});
     P=P.filter(function(x){return x.id!=id;});
     loadP(function(){
       updBadges();
       populateSelects();
       rdr(curPage);
     });
-    toast('🗑 Projeto removido!');
+    toast('\U0001f5d1 Projeto removido!');
   });
 }
 
@@ -1254,6 +1277,7 @@ function dashInit(){
 // ═══ SUPABASE CONFIG ═══
 var SBU='https://lomtwfoccesaejcywail.supabase.co';
 var SBK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvbXR3Zm9jY2VzYWVqY3l3YWlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4Mjc2OTEsImV4cCI6MjA5MzQwMzY5MX0.N_gJxowZm8ftuUlf2L0Yo-INeP8BbYwJil2A2Up7btc';
+var _BOT_URL='https://bot-cs-p-s-venda-production.up.railway.app';
 
 function sb(method,table,params,body,cb){
   var url=SBU+'/rest/v1/'+table+(params?'?'+params:'');

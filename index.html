@@ -262,6 +262,9 @@ select option{background:var(--s2);}
     <div class="sb-sub-item" onclick="goPage('relatorio')" id="ssi-relatorio">
       <span class="sb-sub-dot"></span>Gráficos & Dados
     </div>
+    <div class="sb-sub-item" onclick="goPage('rel-adicional')" id="ssi-rel-adicional">
+      <span class="sb-sub-dot"></span>Relatório Adicional
+    </div>
   </div>
 
   <div class="sb-footer">
@@ -391,9 +394,7 @@ select option{background:var(--s2);}
           <div class="page-title">👥 Time · Equipe CS</div>
           <div class="page-sub">Gerencie os membros e acessos da equipe</div>
         </div>
-        <div class="hdr-right">
-          <button class="btn btn-acc" onclick="openAddMember()">＋ Adicionar Membro</button>
-        </div>
+        <div class="hdr-right" id="hdr-add-membro"></div>
       </div>
       <div class="stat-row" id="st-membros">
         <div class="stat-card sc-t"><div class="stat-lbl">Total Membros</div><div class="stat-num" id="sm-total">0</div></div>
@@ -463,8 +464,35 @@ select option{background:var(--s2);}
       </div>
     </div>
 
+    <!-- ═══ RELATÓRIO ADICIONAL ═══ -->
+    <div class="page" id="page-rel-adicional">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">📎 Relatório Adicional</div>
+          <div class="page-sub">Projetos finalizados com informação adicional</div>
+        </div>
+      </div>
+      <div id="rel-adicional-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;"></div>
+      <div class="tcard" style="margin-top:16px;">
+        <div class="tcard-hdr">
+          <span class="tcard-title">📋 Projetos com Adicional</span>
+          <span class="tcard-count" id="rel-adicional-count">—</span>
+        </div>
+        <table><thead><tr>
+          <th>#</th><th>Nome</th><th>Cidade</th><th>Membro CS</th><th>Valor</th><th>Informação Adicional</th><th>Data</th>
+        </tr></thead>
+        <tbody id="rel-adicional-tbody"></tbody></table>
+        <div class="empty" id="rel-adicional-empty" style="display:none;">
+          <div class="empty-ico">📭</div>
+          <p>Nenhum projeto com informação adicional ainda.<br><small style="opacity:.6">Ative o toggle "Adicional" ao criar uma solicitação.</small></p>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
+
+
 
 <!-- MODAL PROJETO -->
 <div class="overlay" id="overlay-proj">
@@ -486,6 +514,19 @@ select option{background:var(--s2);}
       <div class="fg"><label>Valor (R$)</label><input id="f-valor" type="number" placeholder="0.00" step="0.01"></div>
       <div class="fg"><label>Membro CS</label><input id="f-vend" placeholder="Nome do membro CS"></div>
       <div class="fg full"><label>Itens</label><textarea id="f-itens" placeholder="Ex: 2x Camiseta P, 1x Boné Azul..."></textarea></div>
+      <div class="fg full" style="margin-top:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#080b10;border:1px solid #1e2d45;border-radius:10px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#d8e8ff;">📎 Informação Adicional</div>
+            <div style="font-size:10px;color:#4a6080;margin-top:1px;">Ativar para adicionar uma observação extra</div>
+          </div>
+          <label class="toggle"><input type="checkbox" id="f-adicional-toggle" onchange="toggleAdicional(this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div id="f-adicional-wrap" style="display:none;margin-top:8px;">
+          <textarea id="f-adicional" placeholder="Descreva a informação adicional..." style="width:100%;min-height:70px;background:#080b10;border:1px solid #00c6ff40;border-radius:8px;padding:10px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;resize:vertical;box-sizing:border-box;margin-bottom:8px;"></textarea>
+          <input id="f-valor-adicional" type="number" placeholder="Valor do adicional (R$)" step="0.01" style="width:100%;background:#080b10;border:1px solid #00c6ff40;border-radius:8px;padding:10px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;box-sizing:border-box;">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('overlay-proj')">Cancelar</button>
@@ -561,6 +602,8 @@ function loadP(cb){
         valor: parseFloat(p.valor||p.Valor||0)||0,
         vendedor: p.vendedor||'',
         status: p.status||'pending',
+        adicional: (p.adicional&&String(p.adicional).trim()!=='')?p.adicional:null,
+        valor_adicional: parseFloat(p.valor_adicional)||0,
         date: p.date||p.created_at||new Date().toISOString()
       };
     });
@@ -607,6 +650,7 @@ const PAGE_META = {
   'finalizados': { bc:'Equipe CS › <span>Finalizados</span>',  sb:'equipe-cs', ssi:'finalizados' },
   'membros':     { bc:'Time › <span>Membros</span>',           sb:'time',      ssi:'membros' },
   'relatorio':   { bc:'Relatório › <span>Gráficos</span>',     sb:'relatorio', ssi:'relatorio' },
+  'rel-adicional': { bc:'Relatório › <span>Adicional</span>', sb:'relatorio', ssi:'rel-adicional' },
 };
 
 function goPage(id){
@@ -719,6 +763,7 @@ function rdr(id){
   else if(id==='finalizados') rFin();
   else if(id==='membros') rMembros();
   else if(id==='relatorio') buildCharts();
+  else if(id==='rel-adicional') buildRelAdicional();
 }
 
 function rSol(){
@@ -764,20 +809,56 @@ function rMembros(){
   const grid=document.getElementById('member-grid');
   if(!grid) return;
   const isAdmin=_currentUser&&_currentUser.role==='Administrador';
+  // Botão adicionar membro só para admin
+  var hdrAdd=document.getElementById('hdr-add-membro');
+  if(hdrAdd) hdrAdd.innerHTML=isAdmin?'<button class="btn btn-acc" onclick="openAddMember()">＋ Adicionar Membro</button>':'';
+  const totalGeral=P.length||1;
   grid.innerHTML=MEMBROS.map(m=>{
     const tot=P.filter(p=>p.vendedor===m.name).length;
     const pen=P.filter(p=>p.vendedor===m.name&&p.status==='pending').length;
-    const av=m.discord_avatar?`<img src="${m.discord_avatar}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;">`:`<div class="av" style="background:${m.color}22;color:${m.color}">${m.emoji}</div>`;
-    return `<div class="member-card">
+    const fin=P.filter(p=>p.vendedor===m.name&&p.status==='done').length;
+    const vol=P.filter(p=>p.vendedor===m.name).reduce(function(s,p){return s+(parseFloat(p.valor)||0);},0);
+    const pct=totalGeral>0?Math.round((tot/totalGeral)*100):0;
+    const mid=m.id;
+    const emojiClick=isAdmin?' onclick="trocarEmoji(\''+mid+'\')" title="Clique para trocar emoji" style="cursor:pointer;"':' style="cursor:default;"';
+    const av=m.discord_avatar?'<img src="'+m.discord_avatar+'" style="width:48px;height:48px;border-radius:12px;object-fit:cover;border:2px solid '+m.color+'60;">'
+      :'<div class="av" style="width:48px;height:48px;border-radius:12px;background:'+m.color+'22;color:'+m.color+';font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"'+emojiClick+'>'+m.emoji+'</div>';
+    const nomeEl=isAdmin
+      ?`<div class="mc-name" style="cursor:pointer;display:flex;align-items:center;gap:5px;" onclick="editarNomeMembro('${m.id}')" title="Clique para editar">${esc(m.name)} <span style="font-size:10px;opacity:.5;">✏️</span></div>`
+      :`<div class="mc-name">${esc(m.name)}</div>`;
+    return `<div class="member-card" style="padding:14px 16px;">
       ${av}
-      <div class="mc-info">
-        <div class="mc-name">${esc(m.name)}</div>
-        <div class="mc-role" style="color:${m.color}99">${esc(m.cargo)}</div>
-        ${m.discord_username?`<div style="font-size:10px;color:#5865f2;">🎮 ${esc(m.discord_username)}</div>`:''}
-        <div style="margin-top:4px;font-size:10px;color:var(--muted);">${tot} proj · ${pen} pend</div>
+      <div class="mc-info" style="flex:1;">
+        ${nomeEl}
+        <div style="display:flex;align-items:center;gap:5px;"><div class="mc-role" style="color:${m.color};font-size:11px;font-weight:600;">${esc(m.cargo)}</div>${m.cargo==='Administrador'?'<span style="background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;border-radius:4px;font-size:9px;font-weight:700;padding:1px 5px;">👑 ADMIN</span>':''}</div>
+        ${m.discord_username?`<div style="font-size:10px;color:#5865f2;margin-top:2px;">🎮 ${esc(m.discord_username)}</div>`:''}
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:7px;padding:5px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#00c6ff;">${tot}</div>
+            <div style="font-size:8px;color:#4a6080;text-transform:uppercase;">Total</div>
+          </div>
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:7px;padding:5px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#f5c842;">${pen}</div>
+            <div style="font-size:8px;color:#4a6080;text-transform:uppercase;">Pend.</div>
+          </div>
+          <div style="background:#080b10;border:1px solid #1e2d45;border-radius:7px;padding:5px;text-align:center;">
+            <div style="font-size:14px;font-weight:800;color:#22d187;">${fin}</div>
+            <div style="font-size:8px;color:#4a6080;text-transform:uppercase;">Fin.</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#4a6080;margin-bottom:3px;">
+            <span>Participação</span><span style="color:${m.color};font-weight:700;">${pct}%</span>
+          </div>
+          <div style="background:#1e2d45;border-radius:4px;height:4px;overflow:hidden;">
+            <div style="background:${m.color};width:${pct}%;height:100%;border-radius:4px;transition:width .4s;"></div>
+          </div>
+        </div>
+        <div style="margin-top:6px;font-size:10px;color:#a855f7;font-weight:600;">💰 ${vol>=1000?'R$'+(vol/1000).toFixed(1)+'k':'R$'+Math.round(vol)}</div>
       </div>
-      <div class="mc-actions">
-        ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')">✕</button>`:''}
+      <div class="mc-actions" style="display:flex;flex-direction:column;gap:5px;">
+        ${isAdmin&&m.cargo!=='Administrador'?`<button class="btn btn-sm" onclick="promoverAdmin('${m.id}')" title="Promover a Admin" style="background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;">👑</button>`:''}
+        ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')" title="Remover membro">✕</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -787,6 +868,76 @@ function toggleAccess(id, val){
   const m=MEMBROS.find(x=>x.id===id);
   if(m){ m.acesso=val; saveM(); rMembros(); toast(val?'✅ Acesso ativado':'🔒 Acesso removido'); }
 }
+const EMOJIS_LIST=['🌻','🌊','🌸','💜','🌿','⚡','🔥','🌙','🎯','💎','🦋','🐉','🌺','🎸','🏆','🦊','🐺','🎭','🚀','💫'];
+
+function trocarEmoji(id){
+  var m=MEMBROS.find(function(x){return x.id===id;});
+  if(!m)return;
+  var overlay=document.createElement('div');
+  overlay.id='emoji-picker-overlay';
+  overlay.style.cssText='position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;background:#00000080;';
+  var box=document.createElement('div');
+  box.style.cssText='background:#0f1420;border:1px solid #1e2d45;border-radius:14px;padding:20px;max-width:320px;text-align:center;';
+  var title=document.createElement('div');
+  title.style.cssText='font-size:13px;font-weight:700;color:#d8e8ff;margin-bottom:14px;';
+  title.textContent='Escolha um emoji para '+m.name;
+  box.appendChild(title);
+  var grid=document.createElement('div');
+  grid.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:14px;';
+  EMOJIS_LIST.forEach(function(e){
+    var btn=document.createElement('button');
+    btn.textContent=e;
+    btn.style.cssText='font-size:22px;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;';
+    btn.onclick=function(){selecionarEmoji(id,e);};
+    grid.appendChild(btn);
+  });
+  box.appendChild(grid);
+  var cancel=document.createElement('button');
+  cancel.textContent='Cancelar';
+  cancel.style.cssText='padding:8px 20px;border-radius:8px;background:transparent;color:#4a6080;border:1px solid #1e2d45;font-family:Outfit,sans-serif;font-size:12px;cursor:pointer;';
+  cancel.onclick=function(){overlay.remove();};
+  box.appendChild(cancel);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function selecionarEmoji(id, emoji){
+  var m=MEMBROS.find(function(x){return x.id===id;});
+  if(!m)return;
+  var overlay=document.getElementById('emoji-picker-overlay');
+  if(overlay)overlay.remove();
+  m.emoji=emoji;
+  rMembros();
+  toast('✨ Emoji atualizado!');
+}
+
+function promoverAdmin(id){
+  var m=MEMBROS.find(x=>x.id===id);
+  if(!m)return;
+  if(!confirm('Promover '+m.name+' a Administrador? Ele terá acesso total ao sistema.'))return;
+  sbp('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{role:'Administrador'},function(err){
+    if(err){toast('❌ Erro ao promover');return;}
+    toast('👑 '+m.name+' promovido a Administrador!');
+    m.cargo='Administrador';
+    rMembros();
+  });
+}
+
+function editarNomeMembro(id){
+  var m=MEMBROS.find(x=>x.id===id);
+  if(!m)return;
+  var novo=prompt('Editar nome do membro:',m.name);
+  if(!novo||novo.trim()===''||novo.trim()===m.name)return;
+  novo=novo.trim();
+  sbp('PATCH','cs_usuarios','usuario=eq.'+encodeURIComponent(m.name),{usuario:novo},function(err){
+    if(err){toast('❌ Erro ao editar nome');return;}
+    m.id=novo;m.name=novo;
+    rMembros();
+    populateSelects();
+    toast('✏️ Nome atualizado!');
+  });
+}
+
 function removeMember(id){
   if(!confirm('Remover este membro?')) return;
   MEMBROS=MEMBROS.filter(x=>x.id!==id);
@@ -900,21 +1051,31 @@ function finish(id){
   if(!confirm('Finalizar este projeto?'))return;
   sbp('PATCH','projetos','id=eq.'+id,{status:'done'},function(err){
     if(err){toast('Erro ao finalizar');return;}
-    const p=P.find(x=>x.id===id);
-    if(p)p.status='done';
+    // Usa == para comparar corretamente número vs string
+    var p=P.find(function(x){return x.id==id;});
+    if(p) p.status='done';
     toast('✅ Projeto finalizado!');
-    goPage('finalizados');
+    // Recarrega do Supabase para garantir consistência
+    loadP(function(){
+      updBadges();
+      populateSelects();
+      goPage('finalizados');
+    });
   });
 }
 function del(id){
-  if(!confirm('Remover este projeto?'))return;
+  var p=P.find(function(x){return x.id==id;});
+  var nome=p?p.nome:'este projeto';
+  if(!confirm('Tem certeza que deseja remover "'+nome+'"? Esta ação não pode ser desfeita.'))return;
   sbp('DELETE','projetos','id=eq.'+id,null,function(err){
     if(err){toast('Erro ao remover');return;}
-    P=P.filter(x=>x.id!==id);
-    var tr=document.getElementById('tr-'+id);
-    if(tr){tr.style.opacity='0';tr.style.transition='opacity .25s';setTimeout(function(){rdr(curPage);},260);}
-    else rdr(curPage);
-    toast('🗑 Removido');
+    P=P.filter(function(x){return x.id!=id;});
+    loadP(function(){
+      updBadges();
+      populateSelects();
+      rdr(curPage);
+    });
+    toast('🗑 Projeto removido!');
   });
 }
 
@@ -934,12 +1095,17 @@ function addProj(){
   const valor=parseFloat(document.getElementById('f-valor').value)||0;
   const vendedor=document.getElementById('f-vend').value.trim();
   const itens=document.getElementById('f-itens').value.trim();
+  const adicionalAtivo=document.getElementById('f-adicional-toggle').checked;
+  const adicional=adicionalAtivo?document.getElementById('f-adicional').value.trim():'';
+  const valorAdicional=adicionalAtivo?parseFloat(document.getElementById('f-valor-adicional').value)||0:0;
   if(!nome||!cidade||!vendedor){ alert('Preencha Nome, Cidade e Membro CS.'); return; }
-  const proj={nome:nome,cidade:cidade,discord:discord,itens:itens,valor:valor,vendedor:vendedor,status:'pending'};
+  const proj={nome:nome,cidade:cidade,discord:discord,itens:itens,valor:valor,vendedor:vendedor,status:'pending',adicional:adicional||null,valor_adicional:valorAdicional||null};
   sbp('POST','projetos','',proj,function(err,d){
     if(err||!d||!d.length){alert('Erro ao salvar projeto.');return;}
     P.unshift(d[0]);
-    ['f-nome','f-discord','f-valor','f-itens'].forEach(id=>document.getElementById(id).value='');
+    ['f-nome','f-discord','f-valor','f-itens','f-adicional','f-valor-adicional'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
+    var tog=document.getElementById('f-adicional-toggle');if(tog)tog.checked=false;
+    var wrap=document.getElementById('f-adicional-wrap');if(wrap)wrap.style.display='none';
     document.getElementById('f-cidade').value='';
     document.getElementById('f-vend').value=''; document.getElementById('f-vend').disabled=false;
     closeModal('overlay-proj'); rdr(curPage);
@@ -994,7 +1160,7 @@ function dashInit(){
     // Carrega membros em background sem bloquear
     sbp('GET','cs_usuarios','select=usuario,role,discord_avatar,discord_username&aprovado=eq.true&order=usuario.asc',null,function(err,users){
       if(!err&&users&&users.length){
-        MEMBROS=(users||[]).filter(function(u){return u.role!=='Administrador';}).map(function(u,i){
+        MEMBROS=(users||[]).map(function(u,i){
           return {id:u.usuario,name:u.usuario,emoji:MBR_EMOJIS[i%MBR_EMOJIS.length],color:MBR_COLORS[i%MBR_COLORS.length],cargo:u.role||'CS Pós-Vendas',acesso:true,discord_avatar:u.discord_avatar||null,discord_username:u.discord_username||null};
         });
         try{populateSelects();}catch(e){}
@@ -1205,6 +1371,65 @@ function LINIT(usr){
     });
   }
   if(typeof dashInit==='function')dashInit();
+}
+
+function toggleAdicional(on){
+  var wrap=document.getElementById('f-adicional-wrap');
+  if(wrap) wrap.style.display=on?'block':'none';
+}
+
+function buildStatCards(items){
+  return items.map(function(s){
+    return '<div class="stat-card"><div class="stat-label">'+s.label+'</div><div class="stat-val" style="color:'+s.cor+'">'+s.val+'</div></div>';
+  }).join('');
+}
+
+function cancelarAdicional(id){
+  if(!confirm('Remover o registro adicional deste projeto? O projeto continuará existindo, apenas a informação adicional será removida.'))return;
+  sbp('PATCH','projetos','id=eq.'+id,{adicional:null,valor_adicional:null},function(err){
+    if(err){toast('❌ Erro ao remover adicional');return;}
+    var p=P.find(function(x){return x.id===id;});
+    if(p){p.adicional=null;p.valor_adicional=0;}
+    toast('✅ Registro adicional removido!');
+    buildRelAdicional();
+  });
+}
+
+function buildRelAdicional(){
+  var lista=P.filter(function(p){return p.status==='done'&&p.adicional&&String(p.adicional).trim()!=='';});
+  // Stats
+  var stats=document.getElementById('rel-adicional-stats');
+  if(stats){
+    var vol=lista.reduce(function(s,p){return s+(parseFloat(p.valor_adicional)||0);},0);
+    var doneTot=P.filter(function(p){return p.status==='done';}).length||1;
+    var pct=Math.round((lista.length/doneTot)*100);
+    stats.innerHTML=[
+      {label:'Com Adicional',val:lista.length,cor:'#00c6ff'},
+      {label:'Valor Total',val:fval(vol),cor:'#a855f7'},
+      {label:'% dos Finalizados',val:pct+'%',cor:'#22d187'}
+    ].map(function(s){
+      return '<div class="stat-card"><div class="stat-label">'+s.label+'</div><div class="stat-val" style="color:'+s.cor+'">'+s.val+'</div></div>';
+    }).join('');
+  }
+  // Tabela
+  var count=document.getElementById('rel-adicional-count');if(count)count.textContent=lista.length+' projetos';
+  var tbody=document.getElementById('rel-adicional-tbody');
+  var empty=document.getElementById('rel-adicional-empty');
+  if(!tbody)return;
+  if(!lista.length){tbody.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty)empty.style.display='none';
+  tbody.innerHTML=lista.map(function(p,i){
+    return '<tr>'
+      +'<td class="mono" style="color:var(--muted)">'+(i+1)+'</td>'
+      +'<td style="font-weight:600;color:#d8e8ff;">'+esc(p.nome)+'</td>'
+      +'<td>'+cidTag(p.cidade)+'</td>'
+      +'<td>'+chip(p.vendedor)+'</td>'
+      +'<td class="td-val" style="color:#a855f7;">'+fval(p.valor_adicional||0)+'</td>'
+      +'<td style="font-size:12px;color:#d8e8ff;max-width:300px;">'+esc(p.adicional||'')+'</td>'
+      +'<td class="mono" style="font-size:10px;color:var(--muted)">'+fdt(p.date)+'</td>'
+      +'<td><button onclick="cancelarAdicional('+p.id+')" style="background:#f7545420;color:#f75454;border:1px solid #f7545440;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;">✕ Cancelar</button></td>'
+      +'</tr>';
+  }).join('');
 }
 
 function vincularDiscord(){

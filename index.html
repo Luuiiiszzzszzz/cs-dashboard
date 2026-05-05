@@ -858,6 +858,7 @@ function rMembros(){
       </div>
       <div class="mc-actions" style="display:flex;flex-direction:column;gap:5px;">
         ${isAdmin&&m.cargo!=='Administrador'?`<button class="btn btn-sm" onclick="promoverAdmin('${m.id}')" title="Promover a Admin" style="background:#00c6ff20;color:#00c6ff;border:1px solid #00c6ff40;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;">👑</button>`:''}
+        ${isAdmin&&m.cargo==='Administrador'&&(!_currentUser||m.name!==_currentUser.usuario)?`<button class="btn btn-sm" onclick="rebaixarAdmin('${m.id}')" title="Remover Admin" style="background:#f5c84220;color:#f5c842;border:1px solid #f5c84240;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;">👑✕</button>`:''}
         ${isAdmin?`<button class="btn btn-sm btn-del" onclick="removeMember('${m.id}')" title="Remover membro">✕</button>`:''}
       </div>
     </div>`;
@@ -919,6 +920,19 @@ function promoverAdmin(id){
     if(err){toast('❌ Erro ao promover');return;}
     toast('👑 '+m.name+' promovido a Administrador!');
     m.cargo='Administrador';
+    rMembros();
+  });
+}
+
+function rebaixarAdmin(id){
+  var m=MEMBROS.find(function(x){return x.id===id;});
+  if(!m)return;
+  if(_currentUser&&m.name===_currentUser.usuario){toast("Voce nao pode remover seu proprio admin.");return;}
+  if(!confirm("Remover cargo de Administrador de "+m.name+"?\nEle passara a ter acesso de Equipe CS."))return;
+  sbp("PATCH","cs_usuarios","usuario=eq."+encodeURIComponent(m.name),{role:"Equipe CS"},function(err){
+    if(err){toast("Erro ao remover admin");return;}
+    toast("Admin removido de "+m.name);
+    m.cargo="Equipe CS";
     rMembros();
   });
 }

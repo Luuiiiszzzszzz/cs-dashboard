@@ -718,7 +718,8 @@ function mkStats4(list){
 }
 
 // ═══ TABLE ROWS ═══
-function mkRows(list, showStatus){
+function mkRows(list, showStatus, showActions){
+  if(showActions===undefined) showActions=true;
   return list.map((p,i)=>`
     <tr id="tr-${p.id}">
       <td class="mono" style="color:var(--muted)">${i+1}</td>
@@ -729,20 +730,21 @@ function mkRows(list, showStatus){
       <td class="td-val">${fval(p.valor)}</td>
       <td>${chip(p.vendedor)}</td>
       ${showStatus?`<td>${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>`:''}
-      <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date)}</td>
-      <td><div class="acts">
+      <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date||p.created_at)}</td>
+      ${showActions?`<td><div class="acts">
         ${p.status==='pending'?`<button class="btn btn-sm btn-fin" onclick="finish('${p.id}')">✅ Finalizar</button>`:'<span style="color:var(--grn);font-size:11px;font-weight:600">✓</span>'}
         <button class="btn btn-sm btn-del" onclick="del('${p.id}')">✕</button>
-      </div></td>
+      </div></td>`:''}
     </tr>`).join('');
 }
 
-function setTbl(tbId,emId,ctId,list,showStatus){
+function setTbl(tbId,emId,ctId,list,showStatus,showActions){
+  if(showActions===undefined) showActions=true;
   const tb=document.getElementById(tbId),em=document.getElementById(emId),ct=document.getElementById(ctId);
   if(ct) ct.textContent=list.length+' projetos';
   if(!list.length){if(tb)tb.innerHTML='';if(em)em.style.display='block';return;}
   if(em)em.style.display='none';
-  if(tb)tb.innerHTML=mkRows(list,showStatus);
+  if(tb)tb.innerHTML=mkRows(list,showStatus,showActions);
 }
 
 function filterList(status,cidSel,memSel,q){
@@ -777,7 +779,7 @@ function rSol(){
   const {q,cid,mem}=getFilters('sol');
   const list=filterList(null,cid,mem,q);
   document.getElementById('st-sol').innerHTML=mkStats4(P);
-  setTbl('tb-sol','em-sol','ct-sol',list,true);
+  setTbl('tb-sol','em-sol','ct-sol',list,true,false);
 }
 function rPen(){
   const {q,cid,mem}=getFilters('pen');
@@ -1013,7 +1015,7 @@ function buildCharts(){
         <td class="td-val">${fval(p.valor)}</td>
         <td>${chip(p.vendedor)}</td>
         <td>${p.status==='pending'?'<span class="badge b-pen">🕐 Pendente</span>':'<span class="badge b-don">✅ Finalizado</span>'}</td>
-        <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date)}</td>
+        <td class="mono" style="font-size:10px;color:var(--muted)">${fdt(p.date||p.created_at)}</td>
       </tr>`).join('');
   }
 
@@ -1168,7 +1170,7 @@ function addProj(){
 function exportCSV(st){
   const list=st?P.filter(p=>p.status===st):P;
   const rows=[['ID','Nome','Cidade','Discord ID','Itens','Valor','Membro CS','Status','Data']];
-  list.forEach(p=>rows.push([p.id,p.nome,p.cidade,p.discord,p.itens,p.valor,p.vendedor,p.status==='pending'?'Pendente':'Finalizado',fdt(p.date)]));
+  list.forEach(p=>rows.push([p.id,p.nome,p.cidade,p.discord,p.itens,p.valor,p.vendedor,p.status==='pending'?'Pendente':'Finalizado',fdt(p.date||p.created_at)]));
   const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent('\uFEFF'+csv);
@@ -1489,7 +1491,7 @@ function buildRelAdicional(){
       +'<td>'+chip(p.vendedor)+'</td>'
       +'<td class="td-val" style="color:#a855f7;">'+fval(p.valor_adicional||0)+'</td>'
       +'<td style="font-size:12px;color:#d8e8ff;max-width:300px;">'+esc(p.adicional||'')+'</td>'
-      +'<td class="mono" style="font-size:10px;color:var(--muted)">'+fdt(p.date)+'</td>'
+      +'<td class="mono" style="font-size:10px;color:var(--muted)">'+fdt(p.date||p.created_at)+'</td>'
       +'<td><button onclick="cancelarAdicional('+p.id+')" style="background:#f7545420;color:#f75454;border:1px solid #f7545440;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:Outfit,sans-serif;">✕ Cancelar</button></td>'
       +'</tr>';
   }).join('');

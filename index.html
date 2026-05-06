@@ -478,6 +478,13 @@ select option{background:var(--s2);}
           <span class="tcard-title">📋 Projetos com Adicional</span>
           <span class="tcard-count" id="rel-adicional-count">—</span>
         </div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <input id="fil-adic-membro" type="text" placeholder="🔍 Filtrar por membro CS..." oninput="buildRelAdicional()" style="flex:1;min-width:150px;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:8px 12px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;">
+          <input id="fil-adic-cidade" type="text" placeholder="🏙️ Filtrar por cidade..." oninput="buildRelAdicional()" style="flex:1;min-width:150px;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:8px 12px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;">
+          <input id="fil-adic-discord" type="text" placeholder="💬 Filtrar por Discord ID..." oninput="buildRelAdicional()" style="flex:1;min-width:150px;background:#080b10;border:1px solid #1e2d45;border-radius:8px;padding:8px 12px;color:#d8e8ff;font-family:Outfit,sans-serif;font-size:13px;">
+        </div>
+        <div style="display:none">
+        </div>
         <table><thead><tr>
           <th>#</th><th>Nome</th><th>Cidade</th><th>Membro CS</th><th>Valor</th><th>Informação Adicional</th><th>Data</th>
         </tr></thead>
@@ -1067,21 +1074,29 @@ var DISCORD_WEBHOOK_URL = '';  // Preenchido dinamicamente via BOT_URL
 var DISCORD_WEBHOOK_SECRET = 'cs-posvenda-secret';
 
 function sendDiscordLog(acao, projeto) {
-  var botUrl = (window._BOT_URL || '').replace(/\/+$/, '');
-  if (!botUrl) return;
+  var botUrl = (_BOT_URL || '').replace(/\/+$/, '');
+  if (!botUrl) { console.warn('[Discord Log] BOT_URL não definida'); return; }
   var payload = {
     acao: acao,
     projeto: projeto,
     usuario: (_currentUser && _currentUser.usuario) ? _currentUser.usuario : 'Dashboard'
   };
+  console.log('[Discord Log] Enviando:', acao, botUrl + '/webhook', payload);
   fetch(botUrl + '/webhook', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Webhook-Secret': DISCORD_WEBHOOK_SECRET
+      'X-Webhook-Secret': 'cs-posvenda-secret'
     },
     body: JSON.stringify(payload)
-  }).catch(function(e){ console.warn('[Discord Log]', e); });
+  }).then(function(r){
+    console.log('[Discord Log] Resposta:', r.status);
+    return r.json();
+  }).then(function(d){
+    console.log('[Discord Log] OK:', d);
+  }).catch(function(e){
+    console.error('[Discord Log] ERRO:', e);
+  });
 }
 
 function finish(id){
@@ -1434,7 +1449,17 @@ function cancelarAdicional(id){
 }
 
 function buildRelAdicional(){
-  var lista=P.filter(function(p){return p.status==='done'&&p.adicional&&String(p.adicional).trim()!=='';});
+  var fMembro=(document.getElementById('fil-adic-membro')||{}).value||'';
+  var fCidade=(document.getElementById('fil-adic-cidade')||{}).value||'';
+  var fDiscord=(document.getElementById('fil-adic-discord')||{}).value||'';
+  var lista=P.filter(function(p){
+    if(p.status!=='done')return false;
+    if(!p.adicional||String(p.adicional).trim()==='')return false;
+    if(fMembro&&!(p.vendedor||'').toLowerCase().includes(fMembro.toLowerCase()))return false;
+    if(fCidade&&!(p.cidade||'').toLowerCase().includes(fCidade.toLowerCase()))return false;
+    if(fDiscord&&!(p.discord||'').toLowerCase().includes(fDiscord.toLowerCase()))return false;
+    return true;
+  });
   // Stats
   var stats=document.getElementById('rel-adicional-stats');
   if(stats){
